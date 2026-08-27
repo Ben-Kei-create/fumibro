@@ -3,7 +3,14 @@ import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
-import { getPublicPost } from "@/modules/public-content/application/get-public-content";
+import {
+  LikeButton,
+  CommentForm,
+} from "@/modules/comments/ui/post-interactions";
+import {
+  getPostInteractions,
+  getPublicPost,
+} from "@/modules/public-content/application/get-public-content";
 import {
   AdSlot,
   SafeRichText,
@@ -26,6 +33,7 @@ export default async function BlogDetailPage(props: PageProps<"/blog/[slug]">) {
   const { slug } = await props.params;
   const post = await getPublicPost(slug);
   if (!post) notFound();
+  const interactions = await getPostInteractions(post.id);
 
   return (
     <main className="mx-auto w-full max-w-3xl px-5 py-10 sm:px-8 sm:py-14">
@@ -135,9 +143,28 @@ export default async function BlogDetailPage(props: PageProps<"/blog/[slug]">) {
       </div>
       <section className="mt-10 border-t border-stone-200 pt-8">
         <h2 className="text-xl font-bold">コメント・👍</h2>
-        <p className="mt-3 text-sm leading-7 text-stone-600">
-          コメントと👍は現在準備中です。
-        </p>
+        <div className="mt-4">
+          <LikeButton initialTotal={interactions.likeCount} postId={post.id} />
+        </div>
+        <div className="mt-8 space-y-4">
+          {interactions.comments.map((comment) => (
+            <article className="rounded-xl bg-stone-100 p-4" key={comment.id}>
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <p className="font-semibold">{comment.displayName}</p>
+                <time
+                  className="text-xs text-stone-500"
+                  dateTime={comment.submittedAt}
+                >
+                  {formatPublicDate(comment.submittedAt)}
+                </time>
+              </div>
+              <p className="mt-2 whitespace-pre-wrap text-sm leading-7 text-stone-700">
+                {comment.body}
+              </p>
+            </article>
+          ))}
+        </div>
+        <CommentForm postId={post.id} />
       </section>
     </main>
   );

@@ -110,12 +110,14 @@ Phase 2では`/admin/handoff-inbox`を追加予定だが、Phase 1ではroute、
 | `POST /api/posts/[postId]/likes`                    | 1 browser 1 postの👍        | visitor cookie、HMAC、一意制約、rate limit           |
 | `POST /api/contact`                                 | 問い合わせ保存              | category検証、Origin、入力検証、honeypot、rate limit |
 | `POST /api/visitors/claim`                          | site / Project unique claim | scope allowlist、HMAC、一意制約                      |
-| `GET /api/library/[itemId]/download`                | Libraryファイル取得         | 公開判定、access policy、短期署名URL                 |
+| `GET /api/library/[fileId]/download`                | Libraryファイル取得         | 公開判定、access policy、短期署名URL                 |
 | `GET /api/business-cards/[slug]/png`                | 公開名刺PNG                 | 公開状態、固定Content-Disposition                    |
 | `GET /api/business-cards/[slug]/vcard`              | `.vcf`生成                  | 公開fieldのみ、CRLF/値escape                         |
 | `POST /api/admin/uploads/init`                      | 署名upload開始              | Admin AAL2、type/size宣言検証                        |
 | `POST /api/admin/uploads/[assetId]/complete`        | upload検証と処理            | Admin AAL2、ownership、magic bytes、decode           |
 | `GET /api/admin/exports/[dataset]?format=csv\|json` | データExport                | Admin AAL2、dataset allowlist、no-store              |
+| `POST /api/admin/library-files/init`                | PDF / ZIP upload予約        | Admin AAL2、種類・size・UUID path                    |
+| `POST /api/admin/library-files/[assetId]/complete`  | 配布file検証・添付          | owner再確認、magic bytes、SHA-256、private bucket    |
 
 公開POSTはDBへ匿名直接INSERTさせず、Route Handlerで検証してから限定されたApplication Commandを呼ぶ。Server ComponentがこれらのRoute Handlerを内部APIとして呼ぶことは禁止する。
 

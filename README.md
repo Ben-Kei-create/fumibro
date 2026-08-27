@@ -53,6 +53,14 @@ bulletin board, business cards, media, and Contact inquiries. Works, Library,
 and Pages are saved through AAL2 database commands that capture Revisions; the
 browser cannot update their canonical root/detail tables directly.
 
+Comments support approval-first or immediate publication. Public writes pass
+through same-origin Route Handlers with bounded JSON, a honeypot, minimum form
+time, and HMAC-keyed rate limits; browsers never insert the table directly.
+Likes and site/Project counters reuse one random first-party visitor cookie.
+Only purpose-specific HMAC values are stored, never the raw cookie or IP. Cookie
+deletion and a different browser may be counted again, so these are
+best-effort unique visitors rather than identity tracking.
+
 ## Environment variables
 
 | Name                                   | Exposure     | Purpose                            |
@@ -114,6 +122,11 @@ The buckets have non-overlapping duties:
 
 Paid, restricted, and email-gated Library files never move to a public bucket.
 Delivery routes issue short-lived signed URLs only after an access-policy check.
+Phase 1 permits anonymous delivery only for a published `free_download` item
+whose `download_enabled` flag is on. The Admin upload flow accepts PDF/ZIP up to
+100 MB, checks declared size and magic bytes, stores SHA-256 metadata, and keeps
+object paths out of public projections. `public`, `email_gate`, `paid`, and
+`restricted` files are deny-by-default until their future grant flow exists.
 
 Blog image uploads are limited to one JPEG, PNG, or WebP file of at most 20 MB.
 The browser receives a short-lived upload token for a UUID path in

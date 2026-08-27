@@ -1,4 +1,7 @@
-import { saveTaxonomyAction } from "@/modules/site-admin/application/site-admin-actions";
+import {
+  saveCommentApprovalModeAction,
+  saveTaxonomyAction,
+} from "@/modules/site-admin/application/site-admin-actions";
 import { getAdminTaxonomies } from "@/modules/site-admin/application/get-site-admin-data";
 
 type TaxonomyItem = {
@@ -97,6 +100,28 @@ export default async function AdminSettingsPage() {
       <p className="text-sm font-semibold text-stone-500">SITE SETTINGS</p>
       <h1 className="mt-1 text-3xl font-bold">分類と場所</h1>
       <div className="mt-8 space-y-10">
+        <section>
+          <h2 className="text-xl font-bold">コメント公開方式</h2>
+          <form
+            action={saveCommentApprovalModeAction}
+            className="mt-4 flex flex-col gap-4 rounded-xl border border-stone-200 bg-white p-4 sm:flex-row sm:items-end"
+          >
+            <label className="flex-1 text-sm font-semibold">
+              公開方式
+              <select
+                className="mt-2 min-h-11 w-full rounded-lg border border-stone-300 bg-white px-3 font-normal"
+                defaultValue={data.commentApprovalMode}
+                name="mode"
+              >
+                <option value="approval">承認後に公開</option>
+                <option value="immediate">すぐ公開</option>
+              </select>
+            </label>
+            <button className="button-secondary" type="submit">
+              保存
+            </button>
+          </form>
+        </section>
         <TaxonomySection
           items={categories}
           kind="category"

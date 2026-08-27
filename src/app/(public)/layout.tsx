@@ -1,5 +1,8 @@
 import Link from "next/link";
 
+import { getVisitTotal } from "@/modules/public-content/application/get-public-content";
+import { VisitorCounter } from "@/modules/visitors/ui/visitor-counter";
+
 // Public CMS content must reflect Admin changes without requiring a redeploy.
 export const dynamic = "force-dynamic";
 
@@ -10,9 +13,11 @@ const navigation = [
   ["Works", "/works"],
   ["Portfolio", "/portfolio"],
   ["About", "/about"],
+  ["Search", "/search"],
 ] as const;
 
-export default function PublicLayout({ children }: LayoutProps<"/">) {
+export default async function PublicLayout({ children }: LayoutProps<"/">) {
+  const visitTotal = await getVisitTotal();
   return (
     <>
       <header className="border-b border-stone-200 bg-white">
@@ -39,7 +44,9 @@ export default function PublicLayout({ children }: LayoutProps<"/">) {
       <div className="min-h-[65vh] flex-1">{children}</div>
       <footer className="mt-16 border-t border-stone-200 bg-white">
         <div className="mx-auto flex w-full max-w-6xl flex-col gap-5 px-5 py-8 text-sm text-stone-600 sm:flex-row sm:items-center sm:justify-between sm:px-8">
-          <p>© FUMIBRO</p>
+          <p>
+            © FUMIBRO · VISITORS <VisitorCounter initialTotal={visitTotal} />
+          </p>
           <nav aria-label="フッターナビゲーション">
             <ul className="flex flex-wrap gap-x-5 gap-y-2">
               <li>
@@ -47,6 +54,9 @@ export default function PublicLayout({ children }: LayoutProps<"/">) {
               </li>
               <li>
                 <Link href="/privacy">Privacy</Link>
+              </li>
+              <li>
+                <Link href="/feed.xml">RSS</Link>
               </li>
               <li>
                 <Link href="/admin/login">Admin</Link>

@@ -5,6 +5,7 @@ import { notFound } from "next/navigation";
 import {
   getProjectContent,
   getPublicProject,
+  getVisitTotal,
 } from "@/modules/public-content/application/get-public-content";
 import {
   AdSlot,
@@ -13,6 +14,7 @@ import {
   PageHeading,
 } from "@/modules/public-content/ui/public-content";
 import { getProjectTheme } from "@/themes/registry";
+import { VisitorCounter } from "@/modules/visitors/ui/visitor-counter";
 
 export async function generateMetadata(
   props: PageProps<"/projects/[projectSlug]">,
@@ -29,9 +31,10 @@ export default async function ProjectDetailPage(
   const { projectSlug } = await props.params;
   const project = await getPublicProject(projectSlug);
   if (!project) notFound();
-  const [items, theme] = await Promise.all([
+  const [items, theme, visitTotal] = await Promise.all([
     getProjectContent(project.id),
     Promise.resolve(getProjectTheme(project.themeKey)),
+    getVisitTotal(project.id),
   ]);
 
   return (
@@ -45,6 +48,10 @@ export default async function ProjectDetailPage(
         title={project.name}
       />
       <div className="mt-6 flex flex-wrap gap-4 text-sm font-semibold">
+        <span>
+          VISITORS{" "}
+          <VisitorCounter initialTotal={visitTotal} projectId={project.id} />
+        </span>
         <Link href={`/projects/${project.slug}/feed.xml`}>RSS</Link>
         <Link href="/projects">すべてのProjects</Link>
       </div>

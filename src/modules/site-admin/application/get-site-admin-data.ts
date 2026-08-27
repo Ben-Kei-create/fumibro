@@ -52,7 +52,7 @@ export async function getAdminProjects() {
 
 export async function getAdminTaxonomies() {
   const { supabase } = await requireAdmin({ nextPath: "/admin/settings" });
-  const [tags, categories, locations] = await Promise.all([
+  const [tags, categories, locations, commentSetting] = await Promise.all([
     supabase
       .from("tags")
       .select("id,label,slug,display_order,is_active")
@@ -68,9 +68,16 @@ export async function getAdminTaxonomies() {
       .select("id,display_name,maps_query,display_order,is_active")
       .is("deleted_at", null)
       .order("display_order"),
+    supabase
+      .from("site_settings")
+      .select("value")
+      .eq("setting_key", "comments.approval_mode")
+      .maybeSingle(),
   ]);
   return {
     categories: categories.data ?? [],
+    commentApprovalMode:
+      commentSetting.data?.value === "immediate" ? "immediate" : "approval",
     locations: locations.data ?? [],
     tags: tags.data ?? [],
   };

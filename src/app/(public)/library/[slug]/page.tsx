@@ -3,7 +3,10 @@ import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
-import { getPublicLibraryItem } from "@/modules/public-content/application/get-public-content";
+import {
+  getPublicLibraryFiles,
+  getPublicLibraryItem,
+} from "@/modules/public-content/application/get-public-content";
 import {
   AdSlot,
   SafeRichText,
@@ -33,6 +36,10 @@ export default async function LibraryDetailPage(
   const { slug } = await props.params;
   const item = await getPublicLibraryItem(slug);
   if (!item) notFound();
+  const files =
+    item.downloadEnabled && item.accessPolicy === "free_download"
+      ? await getPublicLibraryFiles(item.id)
+      : [];
   return (
     <main className="mx-auto w-full max-w-4xl px-5 py-10 sm:px-8 sm:py-14">
       <article>
@@ -66,10 +73,31 @@ export default async function LibraryDetailPage(
         <div className="mt-9">
           <SafeRichText value={item.description} />
         </div>
-        {item.downloadEnabled && item.accessPolicy === "free_download" ? (
-          <p className="mt-8 rounded-xl border border-stone-200 bg-white p-5 text-sm leading-7 text-stone-600">
-            ダウンロードファイルを準備中です。
-          </p>
+        {item.downloadEnabled &&
+        item.accessPolicy === "free_download" &&
+        files.length ? (
+          <section
+            className="mt-8 rounded-xl border border-stone-200 bg-white p-5"
+            aria-labelledby="downloads"
+          >
+            <h2 className="font-bold" id="downloads">
+              ダウンロード
+            </h2>
+            <div className="mt-4 flex flex-wrap gap-3">
+              {files.map((file) => (
+                <Link
+                  className={
+                    file.isPrimary ? "button-primary" : "button-secondary"
+                  }
+                  href={`/api/library/${file.id}/download`}
+                  key={file.id}
+                  prefetch={false}
+                >
+                  {file.displayName}（v{file.versionLabel}）
+                </Link>
+              ))}
+            </div>
+          </section>
         ) : (
           <p className="mt-8 rounded-xl bg-stone-100 p-5 text-sm leading-7 text-stone-600">
             この項目は現在、匿名ダウンロードを提供していません。

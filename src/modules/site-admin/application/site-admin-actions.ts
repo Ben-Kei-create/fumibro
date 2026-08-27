@@ -144,6 +144,26 @@ export async function saveTaxonomyAction(formData: FormData) {
   redirect("/admin/settings?saved=1");
 }
 
+export async function saveCommentApprovalModeAction(formData: FormData) {
+  const mode = z
+    .enum(["approval", "immediate"])
+    .safeParse(formData.get("mode"));
+  if (!mode.success) redirect("/admin/settings?error=validation");
+  const { supabase, userId } = await requireAdmin({
+    nextPath: "/admin/settings",
+  });
+  const result = await supabase.from("site_settings").upsert({
+    description: "Public comment moderation mode.",
+    is_public: false,
+    setting_key: "comments.approval_mode",
+    updated_by: userId,
+    value: mode.data,
+  });
+  if (result.error) redirect("/admin/settings?error=save");
+  revalidatePath("/admin/settings");
+  redirect("/admin/settings?saved=comments");
+}
+
 export async function saveNoticeAction(formData: FormData) {
   const parsed = z
     .object({

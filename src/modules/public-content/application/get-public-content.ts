@@ -29,6 +29,17 @@ type ContentRow = {
   updated_at: string;
 };
 
+type SearchRow = {
+  excerpt: string | null;
+  feed_event_type: "new" | "updated" | null;
+  id: string;
+  kind: ContentRow["kind"];
+  project_id: string | null;
+  publish_at: string;
+  slug: string;
+  title: string | null;
+};
+
 function contentHref(kind: ContentRow["kind"], slug: string) {
   if (kind === "post") return `/blog/${slug}`;
   if (kind === "work") return `/works/${slug}`;
@@ -520,6 +531,21 @@ export async function getPublicLibraryItem(slug: string) {
   return items.find((item) => item.slug === slug) ?? null;
 }
 
+export async function getPublicLibraryFiles(libraryItemId: string) {
+  const supabase = createPublicSupabaseClient();
+  const result = await supabase
+    .from("library_files")
+    .select("id,display_name,version_label,is_primary,display_order")
+    .eq("library_item_id", libraryItemId)
+    .order("display_order");
+  return (result.data ?? []).map((file) => ({
+    displayName: file.display_name,
+    id: file.id,
+    isPrimary: file.is_primary,
+    versionLabel: file.version_label,
+  }));
+}
+
 export async function getProjectContent(
   projectId: string,
 ): Promise<PublicContentSummaryDto[]> {
@@ -650,6 +676,131 @@ export async function getContactCategories() {
     .select("id,label,slug")
     .order("display_order");
   return result.data ?? [];
+}
+
+export async function getVisitTotal(projectId?: string) {
+  const supabase = createPublicSupabaseClient();
+  const scopeKey = projectId ? `project:${projectId}` : "site";
+  const result = await supabase
+    .from("visit_counters")
+    .select("total")
+    .eq("scope_key", scopeKey)
+    .maybeSingle();
+  return Number(result.data?.total ?? 0);
+}
+
+export async function getPostInteractions(postId: string) {
+  const supabase = createPublicSupabaseClient();
+  const [comments, likes] = await Promise.all([
+    supabase
+      .from("comments")
+      .select("id,display_name,body,submitted_at")
+      .eq("post_id", postId)
+      .order("submitted_at"),
+    supabase
+      .from("post_like_counts")
+      .select("like_count")
+      .eq("post_id", postId)
+      .maybeSingle(),
+  ]);
+  return {
+    comments: (comments.data ?? []).map((comment) => ({
+      body: comment.body,
+      displayName: comment.display_name,
+      id: comment.id,
+      submittedAt: comment.submitted_at,
+    })),
+    likeCount: Number(likes.data?.like_count ?? 0),
+  };
+}
+
+export async function searchPublicContent(query: string) {
+  const normalized = query.trim();
+  if (!normalized || normalized.length > 100) return [];
+  const supabase = createPublicSupabaseClient();
+  const result = await supabase.rpc("search_public_content", {
+    p_limit: 50,
+    p_offset: 0,
+    p_query: normalized,
+  });
+  const rows = (result.data ?? []) as SearchRow[];
+  const projects = await getProjectMap(
+    supabase,
+    rows.map((row) => row.project_id),
+  );
+  return rows.map((row): PublicContentSummaryDto => ({
+    excerpt: row.excerpt,
+    feedEventType: row.feed_event_type,
+    href: contentHref(row.kind, row.slug),
+    id: row.id,
+    image: null,
+    kind: row.kind,
+    project: row.project_id ? (projects.get(row.project_id) ?? null) : null,
+    publishedAt: row.publish_at,
+    title: row.title ?? "無題の投稿",
+  }));
+}
+
+export async function getTaggedContent(tagSlug: string) {
+  const supabase = createPublicSupabaseClient();
+  const tag = await supabase
+    .from("tags")
+    .select("id,label,slug")
+    .eq("slug", tagSlug)
+    .maybeSingle();
+  if (!tag.data) return null;
+  const relations = await supabase
+    .from("content_tags")
+    .select("content_item_id")
+    .eq("tag_id", tag.data.id);
+  const ids = new Set(
+    (relations.data ?? []).map((item) => item.content_item_id),
+  );
+  const [posts, works, library] = await Promise.all([
+    getPublicPosts({ tagSlug, limit: 100 }),
+    getPublicWorks(),
+    getPublicLibrary(),
+  ]);
+  const items: PublicContentSummaryDto[] = [
+    ...posts.map((post) => ({
+      excerpt: post.excerpt ?? post.body.slice(0, 160),
+      feedEventType: post.feedEventType,
+      href: `/blog/${post.slug}`,
+      id: post.id,
+      image: post.image,
+      kind: "post" as const,
+      project: post.project,
+      publishedAt: post.publishAt,
+      title: post.title ?? "無題の投稿",
+    })),
+    ...works
+      .filter((work) => ids.has(work.id))
+      .map((work) => ({
+        excerpt: work.summary ?? work.excerpt,
+        feedEventType: null,
+        href: `/works/${work.slug}`,
+        id: work.id,
+        image: work.image,
+        kind: "work" as const,
+        project: work.project,
+        publishedAt: work.publishedAt,
+        title: work.title,
+      })),
+    ...library
+      .filter((item) => ids.has(item.id))
+      .map((item) => ({
+        excerpt: item.excerpt,
+        feedEventType: null,
+        href: `/library/${item.slug}`,
+        id: item.id,
+        image: item.cover,
+        kind: "library" as const,
+        project: item.project,
+        publishedAt: item.publishedAt,
+        title: item.title,
+      })),
+  ].sort((left, right) => right.publishedAt.localeCompare(left.publishedAt));
+  return { items, tag: { label: tag.data.label, slug: tag.data.slug } };
 }
 
 export { contentHref };

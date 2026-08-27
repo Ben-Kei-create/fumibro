@@ -42,6 +42,15 @@ export type AdminLibraryEditor = AdminContentListItem & {
   tagIds: string[];
 };
 
+export type AdminLibraryFile = {
+  displayName: string;
+  id: string;
+  isPrimary: boolean;
+  mimeType: string;
+  sizeBytes: number;
+  versionLabel: string;
+};
+
 export type AdminPageEditor = AdminContentListItem & {
   body: string;
   excerpt: string;
@@ -199,6 +208,45 @@ export async function getAdminLibraryItem(
     title: content.data.title ?? "",
     updatedAt: content.data.updated_at,
   };
+}
+
+export async function getAdminLibraryFiles(
+  libraryItemId: string,
+): Promise<AdminLibraryFile[]> {
+  const { supabase } = await requireAdmin({
+    nextPath: `/admin/library/${libraryItemId}/edit`,
+  });
+  const files = await supabase
+    .from("library_files")
+    .select("id,asset_id,display_name,version_label,is_primary,display_order")
+    .eq("library_item_id", libraryItemId)
+    .is("deleted_at", null)
+    .order("display_order");
+  const assetIds = (files.data ?? []).map((file) => file.asset_id);
+  const assets = assetIds.length
+    ? await supabase
+        .from("assets")
+        .select("id,mime_type,size_bytes")
+        .in("id", assetIds)
+    : { data: [] };
+  const assetMap = new Map(
+    (assets.data ?? []).map((asset) => [asset.id, asset]),
+  );
+  return (files.data ?? []).flatMap((file) => {
+    const asset = assetMap.get(file.asset_id);
+    return asset
+      ? [
+          {
+            displayName: file.display_name,
+            id: file.id,
+            isPrimary: file.is_primary,
+            mimeType: asset.mime_type,
+            sizeBytes: asset.size_bytes,
+            versionLabel: file.version_label,
+          },
+        ]
+      : [];
+  });
 }
 
 export async function getAdminPage(

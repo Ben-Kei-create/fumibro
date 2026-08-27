@@ -1,31 +1,31 @@
 import Link from "next/link";
+import { notFound } from "next/navigation";
 
-import { getPublicPosts } from "@/modules/public-content/application/get-public-content";
+import { getTaggedContent } from "@/modules/public-content/application/get-public-content";
 import {
+  ContentSummaryCard,
   EmptyState,
   PageHeading,
-  PostCard,
 } from "@/modules/public-content/ui/public-content";
 
 export default async function TagPage(props: PageProps<"/tags/[tagSlug]">) {
   const { tagSlug } = await props.params;
-  const posts = await getPublicPosts({ tagSlug });
-  const label = posts
-    .flatMap((post) => post.tags)
-    .find((tag) => tag.slug === tagSlug)?.label;
-
+  const result = await getTaggedContent(tagSlug);
+  if (!result) notFound();
   return (
     <main className="mx-auto w-full max-w-5xl px-5 py-10 sm:px-8 sm:py-14">
-      <PageHeading eyebrow="TAG" title={`#${label ?? tagSlug}`} />
+      <PageHeading eyebrow="CROSS-PROJECT TAG" title={`#${result.tag.label}`} />
       <p className="mt-4 text-sm text-stone-600">
-        現在は同じタグが付いたBlog投稿を表示しています。
+        Blog・Works・LibraryをProject横断で表示します。
       </p>
       <Link className="mt-5 inline-flex text-sm font-semibold" href="/blog">
         ← Blogへ戻る
       </Link>
-      <div className="mt-8 space-y-6">
-        {posts.length ? (
-          posts.map((post) => <PostCard key={post.id} post={post} />)
+      <div className="mt-8 space-y-4">
+        {result.items.length ? (
+          result.items.map((item) => (
+            <ContentSummaryCard item={item} key={item.id} />
+          ))
         ) : (
           <EmptyState>このタグの公開コンテンツはまだありません。</EmptyState>
         )}
