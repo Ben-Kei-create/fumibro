@@ -14,17 +14,19 @@ export type AdminInquiryDto = {
   submittedAt: string;
 };
 
-export async function getAdminInquiries(): Promise<AdminInquiryDto[]> {
+export async function getAdminInquiries(
+  status?: AdminInquiryDto["status"],
+): Promise<AdminInquiryDto[]> {
   const { supabase } = await requireAdmin({ nextPath: "/admin/inquiries" });
+  let inquiryQuery = supabase
+    .from("contact_inquiries")
+    .select(
+      "id,category_id,name,email,subject,message,status,admin_note,submitted_at",
+    )
+    .is("deleted_at", null);
+  if (status) inquiryQuery = inquiryQuery.eq("status", status);
   const [inquiries, categories] = await Promise.all([
-    supabase
-      .from("contact_inquiries")
-      .select(
-        "id,category_id,name,email,subject,message,status,admin_note,submitted_at",
-      )
-      .is("deleted_at", null)
-      .order("submitted_at", { ascending: false })
-      .limit(100),
+    inquiryQuery.order("submitted_at", { ascending: false }).limit(100),
     supabase.from("contact_categories").select("id,label"),
   ]);
   const labels = new Map(

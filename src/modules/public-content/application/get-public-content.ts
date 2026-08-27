@@ -18,6 +18,7 @@ import type {
 
 type ContentRow = {
   excerpt: string | null;
+  feed_at: string | null;
   feed_event_type: "new" | "updated" | null;
   id: string;
   kind: "library" | "page" | "post" | "work";
@@ -185,6 +186,7 @@ export async function getPublicPosts(
   options: {
     categorySlug?: string;
     contentId?: string;
+    feedOrder?: boolean;
     limit?: number;
     projectId?: string;
     tagSlug?: string;
@@ -233,10 +235,13 @@ export async function getPublicPosts(
   let contentQuery = supabase
     .from("content_items")
     .select(
-      "id,kind,project_id,slug,title,excerpt,posted_at,publish_at,feed_event_type,updated_at",
+      "id,kind,project_id,slug,title,excerpt,posted_at,publish_at,feed_at,feed_event_type,updated_at",
     )
     .eq("kind", "post")
-    .order("publish_at", { ascending: false })
+    .order(options.feedOrder ? "feed_at" : "publish_at", {
+      ascending: false,
+      nullsFirst: false,
+    })
     .limit(Math.min(options.limit ?? 40, 100));
   if (options.projectId)
     contentQuery = contentQuery.eq("project_id", options.projectId);
@@ -365,7 +370,7 @@ async function getPublicWorksInternal(options: {
   let contentQuery = supabase
     .from("content_items")
     .select(
-      "id,kind,project_id,slug,title,excerpt,posted_at,publish_at,feed_event_type,updated_at",
+      "id,kind,project_id,slug,title,excerpt,posted_at,publish_at,feed_at,feed_event_type,updated_at",
     )
     .eq("kind", "work")
     .order("publish_at", { ascending: false })
@@ -393,7 +398,7 @@ async function getPublicWorksInternal(options: {
     (workResult.data ?? []).map((work) => [work.content_item_id, work]),
   );
   const filtered = content.filter((item) => workById.has(item.id));
-  const [projects, images] = await Promise.all([
+  const [projects, images, tags] = await Promise.all([
     getProjectMap(
       supabase,
       filtered.map((item) => item.project_id),
@@ -402,6 +407,10 @@ async function getPublicWorksInternal(options: {
       supabase,
       filtered.map((item) => workById.get(item.id)?.image_asset_id ?? null),
       "display",
+    ),
+    getTagMap(
+      supabase,
+      filtered.map((item) => item.id),
     ),
   ]);
 
@@ -424,6 +433,7 @@ async function getPublicWorksInternal(options: {
         showInPortfolio: work.show_in_portfolio,
         slug: item.slug,
         summary: work.summary,
+        tags: tags.get(item.id) ?? [],
         title: item.title ?? "Untitled work",
         type: work.work_type,
       };
@@ -467,7 +477,7 @@ export async function getPublicLibrary(
   let contentQuery = supabase
     .from("content_items")
     .select(
-      "id,kind,project_id,slug,title,excerpt,posted_at,publish_at,feed_event_type,updated_at",
+      "id,kind,project_id,slug,title,excerpt,posted_at,publish_at,feed_at,feed_event_type,updated_at",
     )
     .eq("kind", "library")
     .order("publish_at", { ascending: false })

@@ -61,6 +61,7 @@ export type PublicWorkDto = {
   showInPortfolio: boolean;
   slug: string;
   summary: string | null;
+  tags: PublicTagDto[];
   title: string;
   type: string;
 };

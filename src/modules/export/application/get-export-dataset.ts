@@ -24,6 +24,7 @@ type AdminSupabase = Awaited<
 const commonColumns = [
   "id",
   "kind",
+  "project_id",
   "project_slug",
   "slug",
   "title",
@@ -37,22 +38,30 @@ const commonColumns = [
   "source_system",
   "source_external_id",
   "tags",
+  "tag_ids",
   "body_markdown",
+  "post_category_id",
   "category_slug",
+  "location_id",
   "location_name",
   "location_maps_query",
   "external_url",
   "is_spoiler",
   "watermark_enabled",
+  "image_asset_id",
   "summary",
   "description_markdown",
   "work_type",
   "released_on",
   "show_on_home",
+  "home_display_order",
   "show_in_portfolio",
+  "portfolio_display_order",
   "access_policy",
   "download_enabled",
   "inline_preview_enabled",
+  "cover_asset_id",
+  "library_files",
   "created_at",
   "updated_at",
 ] as const;
@@ -63,126 +72,140 @@ export type ExportResult = {
   rows: ExportRow[];
 };
 
+type ContentExportRecord = {
+  created_at: string;
+  excerpt: string | null;
+  feed_at: string | null;
+  feed_event_type: string | null;
+  first_published_at: string | null;
+  id: string;
+  kind: string;
+  posted_at: string;
+  project_id: string | null;
+  publish_at: string | null;
+  slug: string;
+  source_external_id: string | null;
+  source_system: string;
+  status: string;
+  title: string | null;
+  updated_at: string;
+};
+
+async function loadInChunks<T>(
+  ids: string[],
+  query: (chunk: string[]) => PromiseLike<{ data: T[] | null; error: unknown }>,
+): Promise<T[]> {
+  const rows: T[] = [];
+  for (let offset = 0; offset < ids.length; offset += 50) {
+    const result = await query(ids.slice(offset, offset + 50));
+    if (result.error) throw new Error("chunked_export_query_failed");
+    rows.push(...(result.data ?? []));
+  }
+  return rows;
+}
+
 async function contentRows(
   supabase: AdminSupabase,
   dataset: Exclude<ExportDataset, "projects">,
   projectId?: string,
 ): Promise<ExportResult> {
-  let idsForPortfolio: string[] | undefined;
-  if (dataset === "portfolio") {
-    const workResult = await supabase
-      .from("works")
-      .select("content_item_id")
-      .eq("show_in_portfolio", true);
-    if (workResult.error) throw new Error("portfolio_lookup_failed");
-    idsForPortfolio = (workResult.data ?? []).map(
-      (work) => work.content_item_id,
-    );
-    if (!idsForPortfolio.length)
-      return {
-        columns: [...commonColumns],
-        datasetLabel: "portfolio",
-        rows: [],
-      };
+  const content: ContentExportRecord[] = [];
+  for (let offset = 0; ; offset += 200) {
+    let query = supabase
+      .from("content_items")
+      .select(
+        "id,kind,project_id,slug,title,excerpt,status,posted_at,publish_at,first_published_at,feed_at,feed_event_type,source_system,source_external_id,created_at,updated_at",
+      )
+      .order("created_at")
+      .order("id")
+      .range(offset, offset + 199);
+    if (dataset === "blog") query = query.eq("kind", "post");
+    if (dataset === "library") query = query.eq("kind", "library");
+    if (dataset === "works" || dataset === "portfolio")
+      query = query.eq("kind", "work");
+    if (dataset === "project") query = query.eq("project_id", projectId!);
+    const page = await query;
+    if (page.error) throw new Error("content_export_failed");
+    const rows = (page.data ?? []) as ContentExportRecord[];
+    content.push(...rows);
+    if (rows.length < 200) break;
   }
-
-  let query = supabase
-    .from("content_items")
-    .select(
-      "id,kind,project_id,slug,title,excerpt,status,posted_at,publish_at,first_published_at,feed_at,feed_event_type,source_system,source_external_id,created_at,updated_at",
-    )
-    .order("created_at")
-    .limit(10_000);
-  if (dataset === "blog") query = query.eq("kind", "post");
-  if (dataset === "library") query = query.eq("kind", "library");
-  if (dataset === "works" || dataset === "portfolio")
-    query = query.eq("kind", "work");
-  if (dataset === "project") query = query.eq("project_id", projectId!);
-  if (idsForPortfolio) query = query.in("id", idsForPortfolio);
-  const contentResult = await query;
-  if (contentResult.error) throw new Error("content_export_failed");
-  const content = contentResult.data ?? [];
   const contentIds = content.map((item) => item.id);
   const projectIds = [
     ...new Set(content.flatMap((item) => item.project_id ?? [])),
   ];
 
-  const [projects, tagRelations, posts, works, library] = await Promise.all([
-    projectIds.length
-      ? supabase.from("projects").select("id,slug").in("id", projectIds)
-      : Promise.resolve({ data: [], error: null }),
-    contentIds.length
-      ? supabase
+  const [projects, tagRelations, posts, works, library, libraryFiles] =
+    await Promise.all([
+      loadInChunks(projectIds, (ids) =>
+        supabase.from("projects").select("id,slug").in("id", ids),
+      ),
+      loadInChunks(contentIds, (ids) =>
+        supabase
           .from("content_tags")
           .select("content_item_id,tag_id")
-          .in("content_item_id", contentIds)
-      : Promise.resolve({ data: [], error: null }),
-    contentIds.length
-      ? supabase
+          .in("content_item_id", ids),
+      ),
+      loadInChunks(contentIds, (ids) =>
+        supabase
           .from("posts")
           .select(
-            "content_item_id,body_markdown,post_category_id,location_id,external_url,is_spoiler,watermark_enabled",
+            "content_item_id,body_markdown,post_category_id,location_id,image_asset_id,external_url,is_spoiler,watermark_enabled",
           )
-          .in("content_item_id", contentIds)
-      : Promise.resolve({ data: [], error: null }),
-    contentIds.length
-      ? supabase
+          .in("content_item_id", ids),
+      ),
+      loadInChunks(contentIds, (ids) =>
+        supabase
           .from("works")
           .select(
-            "content_item_id,summary,description_markdown,released_on,external_url,work_type,show_on_home,show_in_portfolio",
+            "content_item_id,summary,description_markdown,image_asset_id,released_on,external_url,work_type,show_on_home,home_display_order,show_in_portfolio,portfolio_display_order",
           )
-          .in("content_item_id", contentIds)
-      : Promise.resolve({ data: [], error: null }),
-    contentIds.length
-      ? supabase
+          .in("content_item_id", ids),
+      ),
+      loadInChunks(contentIds, (ids) =>
+        supabase
           .from("library_items")
           .select(
-            "content_item_id,description_markdown,access_policy_code,download_enabled,inline_preview_enabled",
+            "content_item_id,description_markdown,access_policy_code,download_enabled,inline_preview_enabled,cover_asset_id",
           )
-          .in("content_item_id", contentIds)
-      : Promise.resolve({ data: [], error: null }),
-  ]);
-  if (
-    [projects, tagRelations, posts, works, library].some(
-      (result) => result.error,
-    )
-  )
-    throw new Error("content_detail_export_failed");
+          .in("content_item_id", ids),
+      ),
+      loadInChunks(contentIds, (ids) =>
+        supabase
+          .from("library_files")
+          .select(
+            "id,library_item_id,asset_id,version_label,display_name,display_order,is_primary,deleted_at",
+          )
+          .in("library_item_id", ids),
+      ),
+    ]);
 
-  const tagIds = [
-    ...new Set((tagRelations.data ?? []).map((relation) => relation.tag_id)),
-  ];
+  const tagIds = [...new Set(tagRelations.map((relation) => relation.tag_id))];
   const categoryIds = [
-    ...new Set(
-      (posts.data ?? []).flatMap((post) => post.post_category_id ?? []),
-    ),
+    ...new Set(posts.flatMap((post) => post.post_category_id ?? [])),
   ];
   const locationIds = [
-    ...new Set((posts.data ?? []).flatMap((post) => post.location_id ?? [])),
+    ...new Set(posts.flatMap((post) => post.location_id ?? [])),
   ];
   const [tags, categories, locations] = await Promise.all([
-    tagIds.length
-      ? supabase.from("tags").select("id,slug").in("id", tagIds)
-      : Promise.resolve({ data: [], error: null }),
-    categoryIds.length
-      ? supabase.from("post_categories").select("id,slug").in("id", categoryIds)
-      : Promise.resolve({ data: [], error: null }),
-    locationIds.length
-      ? supabase
-          .from("locations")
-          .select("id,display_name,maps_query")
-          .in("id", locationIds)
-      : Promise.resolve({ data: [], error: null }),
+    loadInChunks(tagIds, (ids) =>
+      supabase.from("tags").select("id,slug").in("id", ids),
+    ),
+    loadInChunks(categoryIds, (ids) =>
+      supabase.from("post_categories").select("id,slug").in("id", ids),
+    ),
+    loadInChunks(locationIds, (ids) =>
+      supabase
+        .from("locations")
+        .select("id,display_name,maps_query")
+        .in("id", ids),
+    ),
   ]);
-  if ([tags, categories, locations].some((result) => result.error))
-    throw new Error("taxonomy_export_failed");
 
-  const projectMap = new Map(
-    (projects.data ?? []).map((item) => [item.id, item.slug]),
-  );
-  const tagMap = new Map((tags.data ?? []).map((item) => [item.id, item.slug]));
+  const projectMap = new Map(projects.map((item) => [item.id, item.slug]));
+  const tagMap = new Map(tags.map((item) => [item.id, item.slug]));
   const tagsByContent = new Map<string, string[]>();
-  for (const relation of tagRelations.data ?? []) {
+  for (const relation of tagRelations) {
     const slug = tagMap.get(relation.tag_id);
     if (slug)
       tagsByContent.set(relation.content_item_id, [
@@ -190,56 +213,80 @@ async function contentRows(
         slug,
       ]);
   }
-  const postMap = new Map(
-    (posts.data ?? []).map((item) => [item.content_item_id, item]),
-  );
-  const workMap = new Map(
-    (works.data ?? []).map((item) => [item.content_item_id, item]),
-  );
+  const postMap = new Map(posts.map((item) => [item.content_item_id, item]));
+  const workMap = new Map(works.map((item) => [item.content_item_id, item]));
   const libraryMap = new Map(
-    (library.data ?? []).map((item) => [item.content_item_id, item]),
+    library.map((item) => [item.content_item_id, item]),
   );
-  const categoryMap = new Map(
-    (categories.data ?? []).map((item) => [item.id, item.slug]),
-  );
-  const locationMap = new Map(
-    (locations.data ?? []).map((item) => [item.id, item]),
-  );
+  const filesByLibrary = new Map<
+    string,
+    Array<(typeof libraryFiles)[number]>
+  >();
+  for (const file of libraryFiles) {
+    filesByLibrary.set(file.library_item_id, [
+      ...(filesByLibrary.get(file.library_item_id) ?? []),
+      file,
+    ]);
+  }
+  const categoryMap = new Map(categories.map((item) => [item.id, item.slug]));
+  const locationMap = new Map(locations.map((item) => [item.id, item]));
 
-  const rows = content.map((item): ExportRow => {
-    const post = postMap.get(item.id);
-    const work = workMap.get(item.id);
-    const libraryItem = libraryMap.get(item.id);
-    const location = post?.location_id
-      ? locationMap.get(post.location_id)
-      : undefined;
-    return {
-      ...item,
-      access_policy: libraryItem?.access_policy_code ?? null,
-      body_markdown: post?.body_markdown ?? null,
-      category_slug: post?.post_category_id
-        ? (categoryMap.get(post.post_category_id) ?? null)
-        : null,
-      description_markdown:
-        work?.description_markdown ?? libraryItem?.description_markdown ?? null,
-      download_enabled: libraryItem?.download_enabled ?? null,
-      external_url: post?.external_url ?? work?.external_url ?? null,
-      inline_preview_enabled: libraryItem?.inline_preview_enabled ?? null,
-      is_spoiler: post?.is_spoiler ?? null,
-      location_maps_query: location?.maps_query ?? null,
-      location_name: location?.display_name ?? null,
-      project_slug: item.project_id
-        ? (projectMap.get(item.project_id) ?? null)
-        : null,
-      released_on: work?.released_on ?? null,
-      show_in_portfolio: work?.show_in_portfolio ?? null,
-      show_on_home: work?.show_on_home ?? null,
-      summary: work?.summary ?? null,
-      tags: (tagsByContent.get(item.id) ?? []).sort().join(" "),
-      watermark_enabled: post?.watermark_enabled ?? null,
-      work_type: work?.work_type ?? null,
-    };
-  });
+  const rows = content
+    .filter(
+      (item) =>
+        dataset !== "portfolio" ||
+        workMap.get(item.id)?.show_in_portfolio === true,
+    )
+    .map((item): ExportRow => {
+      const post = postMap.get(item.id);
+      const work = workMap.get(item.id);
+      const libraryItem = libraryMap.get(item.id);
+      const location = post?.location_id
+        ? locationMap.get(post.location_id)
+        : undefined;
+      return {
+        ...item,
+        access_policy: libraryItem?.access_policy_code ?? null,
+        body_markdown: post?.body_markdown ?? null,
+        category_slug: post?.post_category_id
+          ? (categoryMap.get(post.post_category_id) ?? null)
+          : null,
+        description_markdown:
+          work?.description_markdown ??
+          libraryItem?.description_markdown ??
+          null,
+        download_enabled: libraryItem?.download_enabled ?? null,
+        external_url: post?.external_url ?? work?.external_url ?? null,
+        cover_asset_id: libraryItem?.cover_asset_id ?? null,
+        home_display_order: work?.home_display_order ?? null,
+        image_asset_id: post?.image_asset_id ?? work?.image_asset_id ?? null,
+        inline_preview_enabled: libraryItem?.inline_preview_enabled ?? null,
+        is_spoiler: post?.is_spoiler ?? null,
+        location_maps_query: location?.maps_query ?? null,
+        location_name: location?.display_name ?? null,
+        location_id: post?.location_id ?? null,
+        library_files: libraryItem
+          ? JSON.stringify(filesByLibrary.get(item.id) ?? [])
+          : null,
+        portfolio_display_order: work?.portfolio_display_order ?? null,
+        post_category_id: post?.post_category_id ?? null,
+        project_slug: item.project_id
+          ? (projectMap.get(item.project_id) ?? null)
+          : null,
+        released_on: work?.released_on ?? null,
+        show_in_portfolio: work?.show_in_portfolio ?? null,
+        show_on_home: work?.show_on_home ?? null,
+        summary: work?.summary ?? null,
+        tags: (tagsByContent.get(item.id) ?? []).sort().join(" "),
+        tag_ids: tagRelations
+          .filter((relation) => relation.content_item_id === item.id)
+          .map((relation) => relation.tag_id)
+          .sort()
+          .join(" "),
+        watermark_enabled: post?.watermark_enabled ?? null,
+        work_type: work?.work_type ?? null,
+      };
+    });
   return { columns: [...commonColumns], datasetLabel: dataset, rows };
 }
 

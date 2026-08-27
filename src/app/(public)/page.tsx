@@ -14,7 +14,7 @@ import {
 
 export default async function HomePage() {
   const [posts, notices, works] = await Promise.all([
-    getPublicPosts({ limit: 4 }),
+    getPublicPosts({ feedOrder: true, limit: 4 }),
     getPublicNotices(),
     getHomeWorks(),
   ]);

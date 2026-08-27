@@ -15,7 +15,13 @@ export const runtime = "nodejs";
 function unavailable(status: number) {
   return NextResponse.json(
     { error: status === 429 ? "rate_limited" : "download_unavailable" },
-    { headers: { "Cache-Control": "private, no-store" }, status },
+    {
+      headers: {
+        "Cache-Control": "private, no-store",
+        "X-Robots-Tag": "noindex, nofollow",
+      },
+      status,
+    },
   );
 }
 
@@ -71,5 +77,6 @@ export async function GET(
   response.cookies.set(VISITOR_COOKIE_NAME, visitorId, visitorCookieOptions());
   response.headers.set("Cache-Control", "private, no-store");
   response.headers.set("Referrer-Policy", "no-referrer");
+  response.headers.set("X-Robots-Tag", "noindex, nofollow");
   return response;
 }

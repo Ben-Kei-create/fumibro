@@ -9,18 +9,27 @@ export type ContactSubmissionResult =
 export async function submitContactMessage(
   input: ContactMessageInput,
   rateLimitKey: string,
+  duplicateLimitKey: string,
 ): Promise<ContactSubmissionResult> {
   const supabase = createServiceSupabaseClient();
-  const rateResult = await supabase.rpc("service_consume_rate_limit", {
-    p_action_key: "contact.submit",
-    p_limit: 5,
-    p_subject_key: rateLimitKey,
-    p_window_seconds: 3600,
-  });
-  if (rateResult.error) {
+  const [rateResult, duplicateResult] = await Promise.all([
+    supabase.rpc("service_consume_rate_limit", {
+      p_action_key: "contact.submit",
+      p_limit: 5,
+      p_subject_key: rateLimitKey,
+      p_window_seconds: 3600,
+    }),
+    supabase.rpc("service_consume_rate_limit", {
+      p_action_key: "contact.duplicate",
+      p_limit: 1,
+      p_subject_key: duplicateLimitKey,
+      p_window_seconds: 300,
+    }),
+  ]);
+  if (rateResult.error || duplicateResult.error) {
     return { message: "送信を処理できませんでした。", ok: false, status: 500 };
   }
-  if (!rateResult.data) {
+  if (!rateResult.data || !duplicateResult.data) {
     return {
       message: "送信回数が上限に達しました。時間をおいてお試しください。",
       ok: false,

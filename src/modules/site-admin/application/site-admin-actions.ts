@@ -6,6 +6,7 @@ import { z } from "zod";
 
 import { parseTokyoDateTimeLocal } from "@/lib/datetime/tokyo";
 import { requireAdmin } from "@/modules/auth/application/require-admin";
+import { isProjectThemeKey } from "@/themes/registry";
 
 const optionalUuid = z.union([z.literal(""), z.string().uuid()]);
 const slug = z
@@ -37,7 +38,7 @@ export async function saveProjectAction(formData: FormData) {
       isActive: z.boolean(),
       name: z.string().trim().min(1).max(120),
       slug,
-      themeKey: slug,
+      themeKey: slug.refine(isProjectThemeKey),
     })
     .safeParse({
       description: formData.get("description") ?? "",

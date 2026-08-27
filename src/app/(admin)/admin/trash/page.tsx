@@ -4,7 +4,7 @@ import {
   purgeContentAction,
   setContentTrashAction,
 } from "@/modules/blog/application/post-actions";
-import { getAdminPosts } from "@/modules/blog/application/get-admin-post";
+import { getAdminTrash } from "@/modules/content-admin/application/get-admin-trash";
 
 export const metadata: Metadata = { title: "Trash" };
 
@@ -15,17 +15,14 @@ type AdminTrashPageProps = {
 export default async function AdminTrashPage({
   searchParams,
 }: AdminTrashPageProps) {
-  const [result, query] = await Promise.all([
-    getAdminPosts({ trash: true }),
-    searchParams,
-  ]);
+  const [result, query] = await Promise.all([getAdminTrash(), searchParams]);
 
   return (
     <div>
       <p className="text-sm font-semibold text-stone-500">ARCHIVE</p>
       <h1 className="mt-1 text-3xl font-bold text-stone-950">Trash</h1>
       <p className="mt-2 max-w-2xl text-sm leading-6 text-stone-600">
-        通常削除したBlogを保持します。復元はすぐ行えます。完全削除はAAL2に加え、対象名の入力と明示確認が必要です。
+        通常削除したBlog・Works・Library等を保持します。復元はすぐ行えます。完全削除はAAL2に加え、対象名の入力と明示確認が必要です。
       </p>
 
       {query.changed ? (
@@ -50,12 +47,16 @@ export default async function AdminTrashPage({
       ) : null}
 
       <div className="mt-7 space-y-4">
-        {result.posts.length === 0 ? (
+        {result.hasError ? (
+          <p className="rounded-xl border border-red-200 bg-red-50 p-6 text-red-800">
+            Trashを取得できませんでした。
+          </p>
+        ) : result.items.length === 0 ? (
           <p className="rounded-xl border border-stone-200 bg-white p-6 text-stone-600">
             Trashは空です。
           </p>
         ) : (
-          result.posts.map((post) => {
+          result.items.map((post) => {
             const confirmation = post.title?.trim() || post.slug;
 
             return (
@@ -66,8 +67,11 @@ export default async function AdminTrashPage({
                 <h2 className="text-lg font-semibold text-stone-950">
                   {post.title || "（タイトルなし）"}
                 </h2>
-                <p className="mt-1 font-mono text-xs text-stone-500">
-                  {post.slug}
+                <p className="mt-1 text-xs text-stone-500">
+                  <span className="mr-2 rounded bg-stone-100 px-2 py-0.5 font-semibold uppercase">
+                    {post.kind}
+                  </span>
+                  <span className="font-mono">{post.slug}</span>
                 </p>
                 <div className="mt-4 flex flex-wrap gap-3">
                   <form action={setContentTrashAction}>

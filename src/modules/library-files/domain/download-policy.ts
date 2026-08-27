@@ -7,24 +7,37 @@ export const allowedLibraryMimeTypes = [
   "application/x-zip-compressed",
 ] as const;
 
+const safeDisplayName = z
+  .string()
+  .trim()
+  .min(1)
+  .max(255)
+  .refine((value) => !/[\u0000-\u001F\u007F]/u.test(value));
+const safeVersionLabel = z
+  .string()
+  .trim()
+  .min(1)
+  .max(40)
+  .refine((value) => !/[\u0000-\u001F\u007F]/u.test(value));
+
 export const libraryUploadRequestSchema = z.object({
-  displayName: z.string().trim().min(1).max(255),
+  displayName: safeDisplayName,
   displayOrder: z.number().int().min(-10_000).max(10_000),
   filename: z.string().trim().min(1).max(255),
   isPrimary: z.boolean(),
   libraryItemId: z.string().uuid(),
   mimeType: z.enum(allowedLibraryMimeTypes),
   sizeBytes: z.number().int().positive().max(MAX_LIBRARY_FILE_BYTES),
-  versionLabel: z.string().trim().min(1).max(40),
+  versionLabel: safeVersionLabel,
 });
 
 export const completeLibraryUploadSchema = z.object({
   assetId: z.string().uuid(),
-  displayName: z.string().trim().min(1).max(255),
+  displayName: safeDisplayName,
   displayOrder: z.number().int().min(-10_000).max(10_000),
   isPrimary: z.boolean(),
   libraryItemId: z.string().uuid(),
-  versionLabel: z.string().trim().min(1).max(40),
+  versionLabel: safeVersionLabel,
 });
 
 export function sanitizeLibraryFilename(filename: string): string {

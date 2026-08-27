@@ -73,6 +73,15 @@ export default async function LibraryDetailPage(
         <div className="mt-9">
           <SafeRichText value={item.description} />
         </div>
+        {item.tags.length ? (
+          <div className="mt-6 flex flex-wrap gap-3 text-sm text-stone-600">
+            {item.tags.map((tag) => (
+              <Link href={`/tags/${tag.slug}`} key={tag.slug}>
+                #{tag.label}
+              </Link>
+            ))}
+          </div>
+        ) : null}
         {item.downloadEnabled &&
         item.accessPolicy === "free_download" &&
         files.length ? (

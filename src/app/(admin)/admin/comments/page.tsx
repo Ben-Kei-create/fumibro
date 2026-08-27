@@ -1,3 +1,6 @@
+import Link from "next/link";
+import { z } from "zod";
+
 import { getAdminComments } from "@/modules/comments/application/admin-comments";
 import { moderateCommentAction } from "@/modules/comments/application/comment-actions";
 
@@ -7,12 +10,28 @@ const formatter = new Intl.DateTimeFormat("ja-JP", {
   timeZone: "Asia/Tokyo",
 });
 
-export default async function AdminCommentsPage() {
-  const comments = await getAdminComments();
+export default async function AdminCommentsPage({
+  searchParams,
+}: PageProps<"/admin/comments">) {
+  const parameters = await searchParams;
+  const parsedStatus = z
+    .enum(["hidden", "pending", "spam", "visible"])
+    .safeParse(parameters.status);
+  const comments = await getAdminComments(
+    parsedStatus.success ? parsedStatus.data : undefined,
+  );
   return (
     <div className="mx-auto max-w-4xl">
       <p className="text-sm font-semibold text-stone-500">MODERATION</p>
       <h1 className="mt-1 text-3xl font-bold">コメント</h1>
+      {parsedStatus.success ? (
+        <p className="mt-3 text-sm text-stone-600">
+          {parsedStatus.data}だけを表示中 ·{" "}
+          <Link className="underline" href="/admin/comments">
+            すべて表示
+          </Link>
+        </p>
+      ) : null}
       <div className="mt-7 space-y-4">
         {comments.map((comment) => (
           <article

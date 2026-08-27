@@ -48,6 +48,10 @@ export async function POST(request: NextRequest) {
     const result = await submitContactMessage(
       parsed.data,
       deriveVisitorKey(visitorId, "rate-limit:contact"),
+      deriveVisitorKey(
+        visitorId,
+        `duplicate:contact:${parsed.data.categoryId}:${parsed.data.email}:${parsed.data.subject}:${parsed.data.message}`,
+      ),
     );
     response = result.ok
       ? NextResponse.json({ ok: true }, { status: 201 })

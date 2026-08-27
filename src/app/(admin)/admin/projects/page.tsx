@@ -1,5 +1,6 @@
 import { saveProjectAction } from "@/modules/site-admin/application/site-admin-actions";
 import { getAdminProjects } from "@/modules/site-admin/application/get-site-admin-data";
+import { projectThemeKeys } from "@/themes/registry";
 
 export default async function AdminProjectsPage() {
   const projects = await getAdminProjects();
@@ -53,12 +54,18 @@ export default async function AdminProjectsPage() {
             <div className="grid gap-4 sm:grid-cols-2">
               <label className="text-sm font-semibold">
                 theme_key
-                <input
+                <select
                   className="mt-2 min-h-11 w-full rounded-lg border border-stone-300 px-3 font-mono font-normal"
                   defaultValue={project?.theme_key ?? "default"}
                   name="themeKey"
                   required
-                />
+                >
+                  {projectThemeKeys.map((themeKey) => (
+                    <option key={themeKey} value={themeKey}>
+                      {themeKey}
+                    </option>
+                  ))}
+                </select>
               </label>
               <label className="text-sm font-semibold">
                 表示順

@@ -1,3 +1,6 @@
+import Link from "next/link";
+import { z } from "zod";
+
 import { getAdminInquiries } from "@/modules/contact/application/admin-inquiries";
 import { updateInquiryAction } from "@/modules/contact/application/inquiry-actions";
 
@@ -7,8 +10,16 @@ const dateFormatter = new Intl.DateTimeFormat("ja-JP", {
   timeZone: "Asia/Tokyo",
 });
 
-export default async function AdminInquiriesPage() {
-  const inquiries = await getAdminInquiries();
+export default async function AdminInquiriesPage({
+  searchParams,
+}: PageProps<"/admin/inquiries">) {
+  const parameters = await searchParams;
+  const parsedStatus = z
+    .enum(["closed", "in_progress", "new", "spam"])
+    .safeParse(parameters.status);
+  const inquiries = await getAdminInquiries(
+    parsedStatus.success ? parsedStatus.data : undefined,
+  );
   return (
     <div className="mx-auto max-w-4xl">
       <p className="text-sm font-semibold text-stone-500">CONTACT</p>
@@ -17,6 +28,14 @@ export default async function AdminInquiriesPage() {
         Contactから安全に保存された内容です。Phase
         1ではメール送信せず、ここで対応状況を管理します。
       </p>
+      {parsedStatus.success ? (
+        <p className="mt-3 text-sm text-stone-600">
+          {parsedStatus.data}だけを表示中 ·{" "}
+          <Link className="underline" href="/admin/inquiries">
+            すべて表示
+          </Link>
+        </p>
+      ) : null}
       <div className="mt-7 space-y-5">
         {inquiries.length ? (
           inquiries.map((inquiry) => (

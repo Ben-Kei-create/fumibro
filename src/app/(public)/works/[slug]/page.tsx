@@ -67,6 +67,15 @@ export default async function WorkDetailPage(
         <div className="mt-9">
           <SafeRichText value={work.description} />
         </div>
+        {work.tags.length ? (
+          <div className="mt-6 flex flex-wrap gap-3 text-sm text-stone-600">
+            {work.tags.map((tag) => (
+              <Link href={`/tags/${tag.slug}`} key={tag.slug}>
+                #{tag.label}
+              </Link>
+            ))}
+          </div>
+        ) : null}
         <div className="mt-8 flex flex-wrap gap-3">
           {work.externalUrl ? (
             <a

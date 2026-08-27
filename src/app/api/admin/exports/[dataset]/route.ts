@@ -60,6 +60,7 @@ export async function GET(
             ? "text/csv; charset=utf-8"
             : "application/json; charset=utf-8",
         "X-Content-Type-Options": "nosniff",
+        "X-Robots-Tag": "noindex, nofollow",
       },
     });
   } catch (error) {
