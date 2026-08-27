@@ -7,6 +7,7 @@ const optionalUuid = z
 export const quickPostSchema = z.object({
   body: z.string().trim().min(1).max(200_000),
   categoryId: optionalUuid,
+  imageAssetId: optionalUuid,
   projectId: optionalUuid,
   publishMode: z.enum(["draft", "published"]),
   tagIds: z.array(z.string().uuid()).max(20),

@@ -14,6 +14,7 @@ export async function createQuickPostAction(formData: FormData) {
   const parsed = quickPostSchema.safeParse({
     body: formData.get("body"),
     categoryId: formData.get("categoryId") ?? "",
+    imageAssetId: formData.get("imageAssetId") ?? "",
     projectId: formData.get("projectId") ?? "",
     publishMode: formData.get("publishMode"),
     tagIds: formData
@@ -27,14 +28,26 @@ export async function createQuickPostAction(formData: FormData) {
   }
 
   const { supabase } = await requireAdmin({ nextPath: "/admin/quick" });
-  const { error } = await supabase.rpc("admin_create_quick_post", {
+  const now = new Date().toISOString();
+  const { error } = await supabase.rpc("admin_save_post", {
     p_body_markdown: parsed.data.body,
+    p_change_reason: "Quick投稿",
+    p_content_item_id: null,
+    p_expected_lock_version: null,
+    p_excerpt: null,
+    p_external_url: null,
+    p_image_asset_id: parsed.data.imageAssetId,
+    p_is_spoiler: false,
+    p_location_id: null,
     p_post_category_id: parsed.data.categoryId,
+    p_posted_at: now,
     p_project_id: parsed.data.projectId,
-    p_publish: parsed.data.publishMode === "published",
+    p_publish_at: parsed.data.publishMode === "published" ? now : null,
     p_slug: makeQuickPostSlug(),
+    p_status: parsed.data.publishMode,
     p_tag_ids: parsed.data.tagIds,
     p_title: parsed.data.title || null,
+    p_watermark_enabled: false,
   });
 
   if (error) {

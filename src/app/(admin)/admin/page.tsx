@@ -6,11 +6,8 @@ export const dynamic = "force-dynamic";
 
 const managementLinks = [
   { href: "/admin/quick", label: "Quick投稿", note: "スマホから短文を投稿" },
-  {
-    href: "/admin/content",
-    label: "Content",
-    note: "Blog・Works・Library・Pages",
-  },
+  { href: "/admin/posts", label: "Blog", note: "投稿・予約・Revision・Trash" },
+  { href: "/admin/content", label: "Content", note: "全コンテンツ管理" },
   { href: "/admin/projects", label: "Projects", note: "分類とテーマ設定" },
   { href: "/admin/media", label: "Media", note: "画像・ファイル管理" },
   { href: "/admin/exports", label: "Export", note: "CSV・JSON" },

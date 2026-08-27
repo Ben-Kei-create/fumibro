@@ -1,7 +1,8 @@
 import type { Metadata } from "next";
 
-import { getQuickPostOptions } from "@/modules/blog/application/get-quick-post-options";
+import { getPostFormOptions } from "@/modules/blog/application/get-post-form-options";
 import { createQuickPostAction } from "@/modules/blog/application/quick-post";
+import { ImageUploader } from "@/modules/media/ui/image-uploader";
 
 export const dynamic = "force-dynamic";
 
@@ -17,7 +18,7 @@ export default async function QuickPostPage({
   searchParams,
 }: QuickPostPageProps) {
   const parameters = await searchParams;
-  const options = await getQuickPostOptions();
+  const options = await getPostFormOptions("/admin/quick");
   const saved = typeof parameters.saved === "string" ? parameters.saved : null;
   const error = typeof parameters.error === "string" ? parameters.error : null;
 
@@ -157,9 +158,7 @@ export default async function QuickPostPage({
           </div>
         </fieldset>
 
-        <p className="rounded-lg bg-stone-50 p-3 text-xs leading-5 text-stone-600">
-          画像1枚の追加は次のMedia工程で有効になります。本文投稿は現在利用できます。
-        </p>
+        <ImageUploader />
 
         <div className="grid gap-3 sm:grid-cols-2">
           <button

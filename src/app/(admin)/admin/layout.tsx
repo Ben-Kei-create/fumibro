@@ -15,7 +15,9 @@ export const metadata: Metadata = {
 const navigation = [
   { href: "/admin", label: "Dashboard" },
   { href: "/admin/quick", label: "Quick投稿" },
+  { href: "/admin/posts", label: "Blog" },
   { href: "/admin/content", label: "Content" },
+  { href: "/admin/trash", label: "Trash" },
   { href: "/admin/settings", label: "設定" },
 ];
 

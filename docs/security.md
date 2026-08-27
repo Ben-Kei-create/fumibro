@@ -131,6 +131,8 @@ Storage bucket:
 
 UploadはAdmin AAL2だけが開始できる署名付き直接uploadを使う。ブラウザのfilenameやMIME宣言だけを信用しない。
 
+Phase 1の画像uploadでは、authenticated Adminが直接書けるのは`private-originals`と`private-downloads`だけとする。`public-media`へのINSERT / UPDATE / DELETEはbrowser roleへ許可せず、server-only processorがservice roleで処理済みvariantだけを書き込む。署名upload予約のassetは作成Adminに紐づけ、complete時にも同じuser IDを再確認する。
+
 処理時に確認するもの:
 
 - allowlistされた種類
@@ -140,8 +142,11 @@ UploadはAdmin AAL2だけが開始できる署名付き直接uploadを使う。�
 - width / height / pixel count
 - PDF等の期待形式
 - UUIDベースobject path
+- 20 MB以下、40 megapixel以下、静止画のみ
 
 画像から不要なmetadataを除去し、displayとthumbnailを生成する。publicへ置くのは公開済みvariantだけ。original、有料、限定、メールgate、restrictedファイルをpublicへ置かない。
+
+処理中断時の`uploaded / processing / failed` assetは公開しない。cleanupは年齢だけで削除せず、state、参照、variant、private object pathを確認する。完全削除は最新の参照関係を再計算し、対象assetを新規attach不可にしてからStorageを削除する。Storage失敗時は`purge_jobs`を`failed`で保持し、DB削除を成功扱いにしない。
 
 ## Library download
 

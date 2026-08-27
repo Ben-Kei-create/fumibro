@@ -37,6 +37,11 @@ anonymous Auth, creating the single admin user, assigning
 `app_metadata.role = "admin"`, and enrolling TOTP before Admin access is used.
 Do not place authorization flags in editable user metadata.
 
+After the user and trusted `app_metadata` are configured, open `/admin/login`.
+The first login enrolls a TOTP authenticator; later Quick posts reuse the active
+AAL2 session instead of asking for a code on every post. There is no public
+signup or Admin-user creation screen in the application.
+
 ## Environment variables
 
 | Name                                   | Exposure     | Purpose                            |
@@ -99,6 +104,19 @@ The buckets have non-overlapping duties:
 Paid, restricted, and email-gated Library files never move to a public bucket.
 Delivery routes issue short-lived signed URLs only after an access-policy check.
 
+Blog image uploads are limited to one JPEG, PNG, or WebP file of at most 20 MB.
+The browser receives a short-lived upload token for a UUID path in
+`private-originals`. A Node.js processor then checks byte length, magic bytes,
+actual decode, dimensions, animation, and a 40-megapixel limit. Only stripped,
+compressed WebP display and thumbnail variants are written to `public-media`.
+Authenticated browsers cannot write that public bucket directly.
+
+An interrupted upload can leave an `uploaded` or `failed` asset without public
+variants. It is not public and is visible in Admin Media. Do not delete these
+rows or private objects blindly: first verify age, processing state, references,
+and object path. A future maintenance job may automate this same conservative
+check.
+
 ## Vercel deployment
 
 1. Create or select a Vercel project and link this repository.
@@ -125,6 +143,12 @@ Test restoration into a non-production project. A backup that has never been
 restored is not considered verified. Detailed commands, retention, and the
 contact-data deletion procedure are in
 [`docs/backup-restore.md`](docs/backup-restore.md).
+
+Permanent deletion first creates a `purge_jobs` record, recalculates exclusive
+asset references, and records the Storage manifest. Storage failure keeps a
+retryable failed job; database content is removed only after every listed object
+has been removed. Shared assets are excluded and must survive. Backups remain
+the recovery path after a completed purge.
 
 ## Phase boundary
 

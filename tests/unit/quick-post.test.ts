@@ -10,6 +10,7 @@ describe("Quick post input", () => {
     const input = quickPostSchema.parse({
       body: "  今日の記録  ",
       categoryId: "",
+      imageAssetId: "",
       projectId: "",
       publishMode: "published",
       tagIds: ["11111111-1111-4111-8111-111111111111"],
@@ -19,6 +20,7 @@ describe("Quick post input", () => {
     expect(input).toEqual({
       body: "今日の記録",
       categoryId: null,
+      imageAssetId: null,
       projectId: null,
       publishMode: "published",
       tagIds: ["11111111-1111-4111-8111-111111111111"],
@@ -30,6 +32,7 @@ describe("Quick post input", () => {
     const result = quickPostSchema.safeParse({
       body: "   ",
       categoryId: "",
+      imageAssetId: "",
       projectId: "",
       publishMode: "draft",
       tagIds: Array.from(
