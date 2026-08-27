@@ -20,6 +20,47 @@ export default function AdminContentPage() {
         </Link>
         <Link
           className="rounded-xl border border-stone-200 bg-white p-5 hover:border-stone-400"
+          href="/admin/notices"
+        >
+          <h2 className="font-semibold text-stone-950">掲示板</h2>
+          <p className="mt-1 text-sm text-stone-600">Home固定掲示・表示期間</p>
+        </Link>
+        <Link
+          className="rounded-xl border border-stone-200 bg-white p-5 hover:border-stone-400"
+          href="/admin/business-cards"
+        >
+          <h2 className="font-semibold text-stone-950">名刺</h2>
+          <p className="mt-1 text-sm text-stone-600">About・PNG・vCard</p>
+        </Link>
+        <Link
+          className="rounded-xl border border-stone-200 bg-white p-5 hover:border-stone-400"
+          href="/admin/works"
+        >
+          <h2 className="font-semibold text-stone-950">Works / Portfolio</h2>
+          <p className="mt-1 text-sm text-stone-600">
+            作品正本・Home掲載・Portfolio投影
+          </p>
+        </Link>
+        <Link
+          className="rounded-xl border border-stone-200 bg-white p-5 hover:border-stone-400"
+          href="/admin/library"
+        >
+          <h2 className="font-semibold text-stone-950">Library</h2>
+          <p className="mt-1 text-sm text-stone-600">
+            Access policy・表紙・配布基盤
+          </p>
+        </Link>
+        <Link
+          className="rounded-xl border border-stone-200 bg-white p-5 hover:border-stone-400"
+          href="/admin/pages"
+        >
+          <h2 className="font-semibold text-stone-950">Pages</h2>
+          <p className="mt-1 text-sm text-stone-600">
+            About・Privacy・Revision
+          </p>
+        </Link>
+        <Link
+          className="rounded-xl border border-stone-200 bg-white p-5 hover:border-stone-400"
           href="/admin/media"
         >
           <h2 className="font-semibold text-stone-950">Media</h2>
@@ -35,9 +76,6 @@ export default function AdminContentPage() {
           </p>
         </Link>
       </div>
-      <p className="mt-7 rounded-lg bg-stone-50 p-4 text-sm text-stone-600">
-        Works・Library・Pagesの編集画面は次Milestoneでこのhubへ追加します。
-      </p>
     </div>
   );
 }

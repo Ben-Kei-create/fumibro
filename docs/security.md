@@ -65,6 +65,8 @@ AND deleted_at IS NULL
 
 検索、RSS、sitemapも同じ条件を使う。
 
+公開routeのSupabase clientはAdmin cookieを読まない専用anonymous clientとする。AdminがAAL2でログインしたまま公開画面を確認しても、Admin向けRLS policyによって下書きやTrashがRSC payloadへ混入しないようにする。
+
 ## Secretと環境変数
 
 - secret key、service role、HMAC secret、TOTP secretをGitへcommitしない。
@@ -167,6 +169,8 @@ Phase 1の画像uploadでは、authenticated Adminが直接書けるのは`priva
 - DB削除とStorage削除の片方だけが成功した場合、再試行可能な状態を残す。
 - Privacy system Pageは論理・完全削除、slug変更、非公開化を禁止する。
 - 完全削除、Revision復元、重要設定変更を監査記録へ残す。
+
+Blog、Works、Library、Pagesは正本rootとdetailへのbrowser直接更新権限を剥奪し、AAL2検証・楽観lock・Revision・監査を同一transactionで行うDatabase Commandだけを更新経路とする。
 
 ## Admin未処理badge
 

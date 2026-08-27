@@ -42,6 +42,17 @@ The first login enrolls a TOTP authenticator; later Quick posts reuse the active
 AAL2 session instead of asking for a code on every post. There is no public
 signup or Admin-user creation screen in the application.
 
+Public CMS reads use a cookie-free Supabase client so an administrator browsing
+the public site cannot accidentally render draft data from their privileged
+session. Public routes are rendered on demand and reflect Admin publication,
+Trash, and Revision changes without a redeploy.
+
+Phase 1 Admin now manages Blog, Works/Portfolio projection, Library metadata,
+About/Privacy Pages, Projects, post categories, tags, locations, the Home
+bulletin board, business cards, media, and Contact inquiries. Works, Library,
+and Pages are saved through AAL2 database commands that capture Revisions; the
+browser cannot update their canonical root/detail tables directly.
+
 ## Environment variables
 
 | Name                                   | Exposure     | Purpose                            |
@@ -110,6 +121,11 @@ The browser receives a short-lived upload token for a UUID path in
 actual decode, dimensions, animation, and a 40-megapixel limit. Only stripped,
 compressed WebP display and thumbnail variants are written to `public-media`.
 Authenticated browsers cannot write that public bucket directly.
+
+Published business-card images reuse the validated media asset. PNG downloads
+prefer a stored `card_png` variant and otherwise convert the processed public
+display image to PNG in the server-only download route; private originals are
+never returned.
 
 An interrupted upload can leave an `uploaded` or `failed` asset without public
 variants. It is not public and is visible in Admin Media. Do not delete these

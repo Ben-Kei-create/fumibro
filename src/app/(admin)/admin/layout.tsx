@@ -16,7 +16,11 @@ const navigation = [
   { href: "/admin", label: "Dashboard" },
   { href: "/admin/quick", label: "Quick投稿" },
   { href: "/admin/posts", label: "Blog" },
+  { href: "/admin/works", label: "Works" },
+  { href: "/admin/library", label: "Library" },
   { href: "/admin/content", label: "Content" },
+  { href: "/admin/notices", label: "掲示板" },
+  { href: "/admin/projects", label: "Projects" },
   { href: "/admin/trash", label: "Trash" },
   { href: "/admin/settings", label: "設定" },
 ];

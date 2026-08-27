@@ -34,8 +34,14 @@ const purgeManifestSchema = z.array(
 function revalidateContentPaths(contentId?: string) {
   revalidatePath("/");
   revalidatePath("/blog");
+  revalidatePath("/works");
+  revalidatePath("/portfolio");
+  revalidatePath("/library");
+  revalidatePath("/projects");
   revalidatePath("/admin");
   revalidatePath("/admin/posts");
+  revalidatePath("/admin/works");
+  revalidatePath("/admin/library");
   revalidatePath("/admin/trash");
 
   if (contentId) {
@@ -163,13 +169,18 @@ export async function setContentTrashAction(formData: FormData) {
     expectedLockVersion: formData.get("expectedLockVersion"),
   });
   const mode = formData.get("mode");
+  const returnTo = z
+    .enum(["posts", "works", "library", "trash"])
+    .catch("posts")
+    .parse(formData.get("returnTo"));
+  const returnPath = "/admin/" + returnTo;
 
   if (!parsed.success || (mode !== "trash" && mode !== "restore")) {
-    redirect("/admin/posts?error=invalid");
+    redirect(returnPath + "?error=invalid");
   }
 
   const { supabase } = await requireAdmin({
-    nextPath: mode === "trash" ? "/admin/posts" : "/admin/trash",
+    nextPath: mode === "trash" ? returnPath : "/admin/trash",
   });
   const { error } = await supabase.rpc("admin_set_content_trashed", {
     p_content_item_id: parsed.data.contentId,
@@ -179,14 +190,14 @@ export async function setContentTrashAction(formData: FormData) {
 
   if (error) {
     redirect(
-      `${mode === "trash" ? "/admin/posts" : "/admin/trash"}?error=${error.code === "40001" ? "conflict" : "save"}`,
+      `${mode === "trash" ? returnPath : "/admin/trash"}?error=${error.code === "40001" ? "conflict" : "save"}`,
     );
   }
 
   revalidateContentPaths(parsed.data.contentId);
   redirect(
     mode === "trash"
-      ? "/admin/posts?changed=trashed"
+      ? `${returnPath}?changed=trashed`
       : "/admin/trash?changed=restored",
   );
 }
@@ -286,6 +297,10 @@ export async function purgeContentAction(formData: FormData) {
 export async function restoreContentRevisionAction(formData: FormData) {
   const revisionId = formData.get("revisionId");
   const contentId = formData.get("contentId");
+  const kind = z
+    .enum(["post", "work", "library", "page"])
+    .catch("post")
+    .parse(formData.get("kind"));
 
   if (
     typeof revisionId !== "string" ||
@@ -293,7 +308,7 @@ export async function restoreContentRevisionAction(formData: FormData) {
     !z.string().uuid().safeParse(revisionId).success ||
     !z.string().uuid().safeParse(contentId).success
   ) {
-    redirect("/admin/posts?error=invalid");
+    redirect("/admin/content?error=invalid");
   }
 
   const { supabase } = await requireAdmin({
@@ -310,5 +325,13 @@ export async function restoreContentRevisionAction(formData: FormData) {
   }
 
   revalidateContentPaths(contentId);
-  redirect(`/admin/posts/${contentId}/edit?restored=1`);
+  const editPath =
+    kind === "post"
+      ? `/admin/posts/${contentId}/edit`
+      : kind === "work"
+        ? `/admin/works/${contentId}/edit`
+        : kind === "library"
+          ? `/admin/library/${contentId}/edit`
+          : `/admin/pages/${contentId}/edit`;
+  redirect(`${editPath}?restored=1`);
 }

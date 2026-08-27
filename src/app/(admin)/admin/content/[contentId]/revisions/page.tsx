@@ -35,6 +35,15 @@ export default async function ContentRevisionsPage({
     notFound();
   }
 
+  const editHref =
+    result.content.kind === "post"
+      ? `/admin/posts/${contentId}/edit`
+      : result.content.kind === "work"
+        ? `/admin/works/${contentId}/edit`
+        : result.content.kind === "library"
+          ? `/admin/library/${contentId}/edit`
+          : `/admin/pages/${contentId}/edit`;
+
   return (
     <div className="mx-auto max-w-3xl">
       <p className="text-sm font-semibold text-stone-500">CONTENT REVISION</p>
@@ -81,6 +90,7 @@ export default async function ContentRevisionsPage({
               </div>
               <form action={restoreContentRevisionAction}>
                 <input name="contentId" type="hidden" value={contentId} />
+                <input name="kind" type="hidden" value={result.content.kind} />
                 <button
                   className="button-secondary"
                   name="revisionId"
@@ -95,10 +105,7 @@ export default async function ContentRevisionsPage({
         )}
       </div>
 
-      <Link
-        className="button-secondary mt-7"
-        href={`/admin/posts/${contentId}/edit`}
-      >
+      <Link className="button-secondary mt-7" href={editHref}>
         編集画面へ戻る
       </Link>
     </div>
