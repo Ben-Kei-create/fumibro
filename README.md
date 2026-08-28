@@ -157,6 +157,7 @@ check.
    then promote to Production.
 
 Milestone 8のPreviewは`codex/preview`ブランチへpushして確認する。`main`へのpushはProduction用の明示承認後のみ行う。
+GitHub Pull Request上のVercelチェックはPreviewの検証結果として扱い、承認前にProductionへpromoteしない。
 
 Cloud project creation is intentionally not automated by this repository. See
 [`docs/deployment.md`](docs/deployment.md) for the full release runbook.
