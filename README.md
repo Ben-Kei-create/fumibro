@@ -156,6 +156,8 @@ check.
 5. Run the quality gates, deploy a Preview, perform the acceptance checklist,
    then promote to Production.
 
+Milestone 8のPreviewは`codex/preview`ブランチへpushして確認する。`main`へのpushはProduction用の明示承認後のみ行う。
+
 Cloud project creation is intentionally not automated by this repository. See
 [`docs/deployment.md`](docs/deployment.md) for the full release runbook.
 
