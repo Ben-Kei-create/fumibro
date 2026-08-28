@@ -3,7 +3,7 @@ begin;
 create extension if not exists pgtap with schema extensions;
 set local search_path = public, extensions, pg_catalog;
 
-select plan(30);
+select plan(31);
 
 select ok(to_regclass('public.projects') is not null, 'projects table exists');
 select ok(to_regclass('public.content_items') is not null, 'content_items table exists');
@@ -114,6 +114,20 @@ select ok(
       and not coalesce(procedure.proconfig, '{}'::text[]) @> array['search_path=pg_catalog']
   ),
   'every security-definer function fixes search_path to pg_catalog'
+);
+select ok(
+  not exists (
+    select 1
+    from pg_proc as procedure
+    join pg_namespace as namespace on namespace.oid = procedure.pronamespace
+    where namespace.nspname = 'private'
+      and procedure.prosecdef
+      and (
+        has_function_privilege('anon', procedure.oid, 'EXECUTE')
+        or has_function_privilege('authenticated', procedure.oid, 'EXECUTE')
+      )
+  ),
+  'private security-definer functions are not executable by browser roles'
 );
 
 select is(
