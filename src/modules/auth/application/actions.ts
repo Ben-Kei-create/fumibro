@@ -83,7 +83,7 @@ export async function requestPasswordResetAction(formData: FormData) {
     "",
   );
   await supabase.auth.resetPasswordForEmail(parsed.data.email, {
-    redirectTo: `${siteUrl}/admin/update-password`,
+    redirectTo: `${siteUrl}/auth/callback?next=/admin/update-password`,
   });
 
   // Always show the same result for valid-looking addresses to avoid account
