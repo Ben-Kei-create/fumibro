@@ -17,7 +17,8 @@ export default async function ForgotPasswordPage({
 }: ForgotPasswordPageProps) {
   const parameters = await searchParams;
   const sent = parameters.sent === "1";
-  const invalid = parameters.error === "invalid";
+  const invalidEmail = parameters.error === "invalid_email";
+  const invalidLink = parameters.error === "invalid_link";
 
   return (
     <main className="mx-auto flex min-h-screen w-full max-w-md items-center px-5 py-12">
@@ -58,7 +59,15 @@ export default async function ForgotPasswordPage({
                 type="email"
               />
             </div>
-            {invalid ? (
+            {invalidLink ? (
+              <p
+                className="rounded-lg bg-red-50 p-3 text-sm text-red-800"
+                role="alert"
+              >
+                リセットリンクが無効または期限切れです。同じブラウザで再設定メールを再取得してください。
+              </p>
+            ) : null}
+            {invalidEmail ? (
               <p
                 className="rounded-lg bg-red-50 p-3 text-sm text-red-800"
                 role="alert"

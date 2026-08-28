@@ -74,7 +74,7 @@ export async function requestPasswordResetAction(formData: FormData) {
   });
 
   if (!parsed.success) {
-    redirect("/admin/forgot-password?error=invalid");
+    redirect("/admin/forgot-password?error=invalid_email");
   }
 
   const supabase = await createServerSupabaseClient();

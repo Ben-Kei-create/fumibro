@@ -12,7 +12,7 @@ export async function GET(request: NextRequest) {
 
   if (!code) {
     return NextResponse.redirect(
-      new URL("/admin/login?error=invalid", request.url),
+      new URL("/admin/forgot-password?error=invalid_link", request.url),
     );
   }
 
@@ -24,7 +24,7 @@ export async function GET(request: NextRequest) {
 
   if (error) {
     return NextResponse.redirect(
-      new URL("/admin/login?error=invalid", request.url),
+      new URL("/admin/forgot-password?error=invalid_link", request.url),
     );
   }
 
