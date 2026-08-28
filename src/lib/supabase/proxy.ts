@@ -5,6 +5,8 @@ import { getPublicEnvironment } from "@/lib/env/public";
 
 const ADMIN_LOGIN_PATH = "/admin/login";
 const ADMIN_MFA_PATH = "/admin/mfa";
+const ADMIN_FORGOT_PASSWORD_PATH = "/admin/forgot-password";
+const ADMIN_UPDATE_PASSWORD_PATH = "/admin/update-password";
 
 export async function updateSupabaseSession(request: NextRequest) {
   let response = NextResponse.next({ request });
@@ -37,7 +39,10 @@ export async function updateSupabaseSession(request: NextRequest) {
   const pathname = request.nextUrl.pathname;
   const isAdminPath = pathname === "/admin" || pathname.startsWith("/admin/");
   const isAuthenticationPath =
-    pathname === ADMIN_LOGIN_PATH || pathname === ADMIN_MFA_PATH;
+    pathname === ADMIN_LOGIN_PATH ||
+    pathname === ADMIN_MFA_PATH ||
+    pathname === ADMIN_FORGOT_PASSWORD_PATH ||
+    pathname === ADMIN_UPDATE_PASSWORD_PATH;
 
   if (isAdminPath && !isAuthenticationPath && !data?.claims) {
     const loginUrl = request.nextUrl.clone();
