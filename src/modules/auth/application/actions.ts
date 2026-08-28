@@ -82,9 +82,18 @@ export async function requestPasswordResetAction(formData: FormData) {
     /\/$/,
     "",
   );
-  await supabase.auth.resetPasswordForEmail(parsed.data.email, {
-    redirectTo: `${siteUrl}/auth/callback?next=/admin/update-password`,
-  });
+  const { error } = await supabase.auth.resetPasswordForEmail(
+    parsed.data.email,
+    {
+      redirectTo: `${siteUrl}/auth/callback?next=/admin/update-password`,
+    },
+  );
+
+  if (error) {
+    // Keep the response generic while making delivery/rate-limit failures
+    // actionable for the administrator.
+    redirect("/admin/forgot-password?error=unavailable");
+  }
 
   // Always show the same result for valid-looking addresses to avoid account
   // enumeration through the public reset form.

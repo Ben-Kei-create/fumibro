@@ -19,6 +19,7 @@ export default async function ForgotPasswordPage({
   const sent = parameters.sent === "1";
   const invalidEmail = parameters.error === "invalid_email";
   const invalidLink = parameters.error === "invalid_link";
+  const unavailable = parameters.error === "unavailable";
 
   return (
     <main className="mx-auto flex min-h-screen w-full max-w-md items-center px-5 py-12">
@@ -73,6 +74,14 @@ export default async function ForgotPasswordPage({
                 role="alert"
               >
                 メールアドレスを確認してください。
+              </p>
+            ) : null}
+            {unavailable ? (
+              <p
+                className="rounded-lg bg-red-50 p-3 text-sm text-red-800"
+                role="alert"
+              >
+                現在メールを送信できません。しばらく待ってから再試行してください。
               </p>
             ) : null}
             <button className="button-primary w-full" type="submit">
