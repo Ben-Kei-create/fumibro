@@ -104,6 +104,12 @@ export default async function AdminLoginPage({ searchParams }: LoginPageProps) {
         >
           公開サイトへ戻る
         </Link>
+        <Link
+          className="mt-3 inline-block text-sm text-stone-600 underline"
+          href="/admin/forgot-password"
+        >
+          パスワードを忘れた場合
+        </Link>
       </section>
     </main>
   );
