@@ -5,6 +5,7 @@ import { sanitizeAdminNextPath } from "@/modules/auth/domain/admin-navigation";
 
 export async function GET(request: NextRequest) {
   const code = request.nextUrl.searchParams.get("code");
+  const flowId = request.nextUrl.searchParams.get("sb_flow_id");
   const nextPath = sanitizeAdminNextPath(
     request.nextUrl.searchParams.get("next"),
   );
@@ -16,7 +17,10 @@ export async function GET(request: NextRequest) {
   }
 
   const supabase = await createServerSupabaseClient();
-  const { error } = await supabase.auth.exchangeCodeForSession(code);
+  const { error } = await supabase.auth.exchangeCodeForSession(
+    code,
+    flowId ? { flowId } : undefined,
+  );
 
   if (error) {
     return NextResponse.redirect(

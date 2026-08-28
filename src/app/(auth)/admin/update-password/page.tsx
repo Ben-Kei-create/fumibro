@@ -11,12 +11,18 @@ export const metadata: Metadata = {
 export default async function UpdatePasswordPage({
   searchParams,
 }: {
-  searchParams: Promise<{ code?: string | string[] }>;
+  searchParams: Promise<{
+    code?: string | string[];
+    sb_flow_id?: string | string[];
+  }>;
 }) {
   const params = await searchParams;
   const recoveryCode = Array.isArray(params.code)
     ? params.code[0]
     : params.code;
+  const flowId = Array.isArray(params.sb_flow_id)
+    ? params.sb_flow_id[0]
+    : params.sb_flow_id;
 
   // Older reset emails can target this page directly with a PKCE code. Route
   // them through the callback handler so the code is exchanged server-side and
@@ -26,6 +32,9 @@ export default async function UpdatePasswordPage({
       code: recoveryCode,
       next: "/admin/update-password",
     });
+    if (flowId) {
+      callbackParams.set("sb_flow_id", flowId);
+    }
     redirect(`/auth/callback?${callbackParams.toString()}`);
   }
 
