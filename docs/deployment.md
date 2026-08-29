@@ -13,6 +13,8 @@ ProductionのSupabaseとVercelは、このリポジトリから自動作成し�
 5. `.env.example`の全変数をDevelopment、Preview、Productionへ環境別に登録する。
 6. Production secretをPreviewへ流用しない。`SUPABASE_SECRET_KEY`と`VISITOR_HMAC_SECRET`はserver-onlyとする。
 
+Phase 1の統合確認は、GitHubの`codex/preview`ブランチをVercel Preview環境へ配置する。`main`へのpushでProductionを自動更新しない。Preview検証後に別途承認を取得してからProductionを更新する。
+
 ## Release手順
 
 固定済みNode/npmを使う。

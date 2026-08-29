@@ -45,12 +45,14 @@ Projectで分類されたBlog、Works、Libraryのcanonical URLは、それぞ�
 
 ## Admin認証ルート
 
-| URL                     | 内容                                           |
-| ----------------------- | ---------------------------------------------- |
-| `/admin/login`          | メール・パスワードログイン。公開signup導線なし |
-| `/admin/mfa`            | TOTP登録、challenge、AAL2到達確認              |
-| `/admin/callback`       | PKCE・password recovery callback               |
-| `/admin/reset-password` | 管理者パスワード回復                           |
+| URL                      | 内容                                           |
+| ------------------------ | ---------------------------------------------- |
+| `/admin/login`           | メール・パスワードログイン。公開signup導線なし |
+| `/admin/mfa`             | TOTP登録、challenge、AAL2到達確認              |
+| `/admin/forgot-password` | Recoveryメール要求                             |
+| `/auth/confirm`          | `token_hash`検証・Recovery session確立         |
+| `/auth/callback`         | 既発行PKCEリンクを`/auth/confirm`へ移す互換口  |
+| `/admin/update-password` | 認証済みRecovery sessionで新passwordを設定     |
 
 認証ページからAdminデータを返さない。認証済みAdminページと応答は共有cacheやISRを使わず、cookieを書き換える応答へ`private, no-store`相当を適用する。
 
