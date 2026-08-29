@@ -36,6 +36,7 @@ export default async function AdminLoginPage({ searchParams }: LoginPageProps) {
       : errorCode
         ? "メールアドレスまたはパスワードを確認してください。"
         : null;
+  const passwordUpdated = parameters.password_updated === "1";
 
   return (
     <main className="mx-auto flex min-h-screen w-full max-w-md items-center px-5 py-12">
@@ -91,6 +92,14 @@ export default async function AdminLoginPage({ searchParams }: LoginPageProps) {
               role="alert"
             >
               {errorMessage}
+            </p>
+          ) : null}
+          {passwordUpdated ? (
+            <p
+              className="rounded-lg bg-stone-100 p-3 text-sm text-stone-800"
+              role="status"
+            >
+              パスワードを更新しました。新しいパスワードでログインしてください。
             </p>
           ) : null}
           <button className="button-primary w-full" type="submit">

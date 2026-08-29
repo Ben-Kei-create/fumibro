@@ -37,6 +37,31 @@ test("signed-out Admin is redirected to the login form", async ({ page }) => {
   await expect(page.getByLabel("パスワード")).toBeVisible();
 });
 
+test("invalid recovery credentials fail closed", async ({ page }) => {
+  await page.goto("/auth/confirm?token_hash=invalid&type=signup");
+  await expect(page).toHaveURL(/\/admin\/forgot-password\?error=invalid_link/u);
+  await expect(
+    page.getByText("リセットリンクが無効または期限切れです。"),
+  ).toBeVisible();
+});
+
+test("password form requires an authenticated Admin recovery session", async ({
+  page,
+}) => {
+  await page.goto("/admin/update-password");
+  await expect(page).toHaveURL(/\/admin\/forgot-password\?error=invalid_link/u);
+  await expect(page.getByLabel("新しいパスワード")).toHaveCount(0);
+});
+
+test("login explains a completed password update", async ({ page }) => {
+  await page.goto("/admin/login?password_updated=1");
+  await expect(
+    page.getByText(
+      "パスワードを更新しました。新しいパスワードでログインしてください。",
+    ),
+  ).toBeVisible();
+});
+
 test("layout does not overflow the active viewport", async ({ page }) => {
   await page.goto("/");
   const dimensions = await page.evaluate(() => ({

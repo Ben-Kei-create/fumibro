@@ -65,7 +65,7 @@ export default async function ForgotPasswordPage({
                 className="rounded-lg bg-red-50 p-3 text-sm text-red-800"
                 role="alert"
               >
-                リセットリンクが無効または期限切れです。同じブラウザで再設定メールを再取得してください。
+                リセットリンクが無効または期限切れです。新しい再設定メールを1回だけ取得してください。
               </p>
             ) : null}
             {invalidEmail ? (

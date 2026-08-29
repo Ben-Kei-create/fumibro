@@ -112,6 +112,30 @@ npm run test:e2e
 CI runs the first four gates on Node 24 for every pull request and push to
 `main`. Database tests require a running local Supabase stack.
 
+## Admin password recovery
+
+FUMIBROのSSR Recovery endpointは`/auth/confirm`である。Recovery emailは
+`token_hash`と`type=recovery`をこのendpointへ送り、server側の`verifyOtp()`が
+cookie sessionを確立してから`/admin/update-password`へ移動する。
+
+Recovery email templateを変更できる環境では、Reset Password templateの
+リンクを次の形にする。Site URLは対象environmentのFUMIBRO originに設定する。
+
+```html
+<a
+  href="{{ .SiteURL }}/auth/confirm?token_hash={{ .TokenHash }}&type=recovery&next=/admin/update-password"
+>
+  Reset password
+</a>
+```
+
+2026年6月3日以降に作成したFree Projectでは、Supabase標準SMTPのままAuth
+email templateを変更できない。FUMIBRO Projectがこの条件に該当する間は、
+同じ`/auth/confirm` endpointがdefault templateのPKCE codeを互換処理する。
+token-hash経路を有効化するには、承認済みcustom SMTPまたはpaid planが必要。
+Recovery emailは標準SMTPのrate limitを消費するため、Preview E2Eは実装・build・
+redirect設定を先に確認し、1通ずつ実施する。
+
 ## Supabase Storage
 
 The buckets have non-overlapping duties:

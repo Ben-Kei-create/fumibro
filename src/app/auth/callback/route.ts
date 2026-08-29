@@ -1,32 +1,13 @@
 import { NextResponse, type NextRequest } from "next/server";
 
-import { createServerSupabaseClient } from "@/lib/supabase/server";
-import { sanitizeAdminNextPath } from "@/modules/auth/domain/admin-navigation";
-
 export async function GET(request: NextRequest) {
-  const code = request.nextUrl.searchParams.get("code");
-  const flowId = request.nextUrl.searchParams.get("sb_flow_id");
-  const nextPath = sanitizeAdminNextPath(
-    request.nextUrl.searchParams.get("next"),
-  );
-
-  if (!code) {
-    return NextResponse.redirect(
-      new URL("/admin/forgot-password?error=invalid_link", request.url),
-    );
+  const confirmUrl = new URL("/auth/confirm", request.url);
+  for (const key of ["code", "sb_flow_id", "token_hash", "type"] as const) {
+    const value = request.nextUrl.searchParams.get(key);
+    if (value) confirmUrl.searchParams.set(key, value);
   }
 
-  const supabase = await createServerSupabaseClient();
-  const { error } = await supabase.auth.exchangeCodeForSession(
-    code,
-    flowId ? { flowId } : undefined,
-  );
-
-  if (error) {
-    return NextResponse.redirect(
-      new URL("/admin/forgot-password?error=invalid_link", request.url),
-    );
-  }
-
-  return NextResponse.redirect(new URL(nextPath, request.url));
+  const response = NextResponse.redirect(confirmUrl, 303);
+  response.headers.set("Cache-Control", "private, no-store, max-age=0");
+  return response;
 }

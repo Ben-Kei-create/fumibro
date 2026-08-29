@@ -28,6 +28,14 @@
 
 `@supabase/ssr`はrequestごとにserver clientを生成する。利用者sessionを持つclientをmodule scopeへ保持しない。Admin応答、Auth callback、cookie refresh応答を共有cacheへ入れない。
 
+### Admin password recovery
+
+- Recoveryメールは`token_hash`と`type=recovery`を`/auth/confirm`へ送り、Route Handlerが`verifyOtp()`でcookie sessionを確立してから`/admin/update-password`へ303 redirectする。
+- callbackは`app_metadata.role = admin`を再確認する。token、code、flow idをpassword入力画面へ転送せず、callback応答は`private, no-store`とする。
+- password変更は認証・Admin権限を再確認するServer Actionから`updateUser()`を呼び、完了後にlocal sessionを破棄する。新passwordで再loginし、TOTPでAAL2へ到達する。
+- `/auth/callback`とPKCE code exchangeは、既発行リンクおよび標準テンプレート向けの互換経路に限定する。primary設計はtoken hashである。
+- 2026年6月3日以降に作成されたFree Projectは、Supabase標準SMTPのままAuth email templateを変更できない。token-hash経路を有効化するには、課金承認済みplanまたは管理者が承認したcustom SMTPが必要である。外部メールproviderを無断で追加しない。
+
 ## 認可境界
 
 `src/proxy.ts`はcookie refreshと楽観的なredirectに限定する。Proxyは低速DB照会や最終認可を担当しない。
