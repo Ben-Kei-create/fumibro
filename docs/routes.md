@@ -28,6 +28,8 @@ Next.js App Routerを使用する。`src/app`はURL、layout、page、Route Hand
 | `/works/[slug]`                    | `src/app/(public)/works/[slug]/page.tsx`                    | Works詳細                                    |
 | `/portfolio`                       | `src/app/(public)/portfolio/page.tsx`                       | Works由来のPortfolio。広告なし               |
 | `/portfolio/[slug]`                | `src/app/(public)/portfolio/[slug]/page.tsx`                | 同じWorkをPortfolio用テンプレートで表示      |
+| `/images`                          | `src/app/(public)/images/page.tsx`                          | 無料配布画像ギャラリー                       |
+| `/images/[slug]`                   | `src/app/(public)/images/[slug]/page.tsx`                   | 画像詳細、SEO、短期署名download              |
 | `/about`                           | `src/app/(public)/about/page.tsx`                           | About/Profile、名刺Dialog                    |
 | `/contact`                         | `src/app/(public)/contact/page.tsx`                         | 問い合わせフォーム                           |
 | `/privacy`                         | `src/app/(public)/privacy/page.tsx`                         | DB管理Privacy system Page                    |
@@ -63,6 +65,7 @@ Projectで分類されたBlog、Works、Libraryのcanonical URLは、それぞ�
 | `/admin`                               | Dashboard、未処理総数、直近操作                    |
 | `/admin/quick`                         | スマホ向け短文、本文、画像1枚、Project、タグ、公開 |
 | `/admin/ai-inbox`                      | AI候補の確認、下書き変換、無視                     |
+| `/admin/images`                        | 複数画像upload、metadata、一括編集、公開           |
 | `/admin/posts`                         | 投稿一覧、状態・予約・Trash filter                 |
 | `/admin/posts/new`                     | 新規投稿                                           |
 | `/admin/posts/[id]/edit`               | 編集、予約、通常更新、更新再公開                   |
@@ -107,20 +110,22 @@ Phase 2では`/admin/ai-inbox`を追加し、AAL2 Adminだけが候補確認、�
 
 ## Route Handler
 
-| Method / URL                                        | 役割                        | 主な防御                                             |
-| --------------------------------------------------- | --------------------------- | ---------------------------------------------------- |
-| `POST /api/posts/[postId]/comments`                 | コメント保存                | 公開投稿確認、Origin、入力検証、honeypot、rate limit |
-| `POST /api/posts/[postId]/likes`                    | 1 browser 1 postの👍        | visitor cookie、HMAC、一意制約、rate limit           |
-| `POST /api/contact`                                 | 問い合わせ保存              | category検証、Origin、入力検証、honeypot、rate limit |
-| `POST /api/visitors/claim`                          | site / Project unique claim | scope allowlist、HMAC、一意制約                      |
-| `GET /api/library/[fileId]/download`                | Libraryファイル取得         | 公開判定、access policy、短期署名URL                 |
-| `GET /api/business-cards/[slug]/png`                | 公開名刺PNG                 | 公開状態、固定Content-Disposition                    |
-| `GET /api/business-cards/[slug]/vcard`              | `.vcf`生成                  | 公開fieldのみ、CRLF/値escape                         |
-| `POST /api/admin/uploads/init`                      | 署名upload開始              | Admin AAL2、type/size宣言検証                        |
-| `POST /api/admin/uploads/[assetId]/complete`        | upload検証と処理            | Admin AAL2、ownership、magic bytes、decode           |
-| `GET /api/admin/exports/[dataset]?format=csv\|json` | データExport                | Admin AAL2、dataset allowlist、no-store              |
-| `POST /api/admin/library-files/init`                | PDF / ZIP upload予約        | Admin AAL2、種類・size・UUID path                    |
-| `POST /api/admin/library-files/[assetId]/complete`  | 配布file検証・添付          | owner再確認、magic bytes、SHA-256、private bucket    |
+| Method / URL                                        | 役割                         | 主な防御                                             |
+| --------------------------------------------------- | ---------------------------- | ---------------------------------------------------- |
+| `POST /api/posts/[postId]/comments`                 | コメント保存                 | 公開投稿確認、Origin、入力検証、honeypot、rate limit |
+| `POST /api/posts/[postId]/likes`                    | 1 browser 1 postの👍         | visitor cookie、HMAC、一意制約、rate limit           |
+| `POST /api/contact`                                 | 問い合わせ保存               | category検証、Origin、入力検証、honeypot、rate limit |
+| `POST /api/visitors/claim`                          | site / Project unique claim  | scope allowlist、HMAC、一意制約                      |
+| `GET /api/library/[fileId]/download`                | Libraryファイル取得          | 公開判定、access policy、短期署名URL                 |
+| `GET /api/images/[imageId]/download`                | Images標準版取得             | 公開・権利・配布判定、rate limit、短期署名URL        |
+| `GET /api/business-cards/[slug]/png`                | 公開名刺PNG                  | 公開状態、固定Content-Disposition                    |
+| `GET /api/business-cards/[slug]/vcard`              | `.vcf`生成                   | 公開fieldのみ、CRLF/値escape                         |
+| `POST /api/admin/uploads/init`                      | 署名upload開始               | Admin AAL2、type/size宣言検証                        |
+| `POST /api/admin/uploads/[assetId]/complete`        | upload検証と処理             | Admin AAL2、ownership、magic bytes、decode           |
+| `POST /api/admin/images`                            | 処理済み画像の下書き一括作成 | Admin AAL2、ownership、download variant確認          |
+| `GET /api/admin/exports/[dataset]?format=csv\|json` | データExport                 | Admin AAL2、dataset allowlist、no-store              |
+| `POST /api/admin/library-files/init`                | PDF / ZIP upload予約         | Admin AAL2、種類・size・UUID path                    |
+| `POST /api/admin/library-files/[assetId]/complete`  | 配布file検証・添付           | owner再確認、magic bytes、SHA-256、private bucket    |
 
 公開POSTはDBへ匿名直接INSERTさせず、Route Handlerで検証してから限定されたApplication Commandを呼ぶ。Server ComponentがこれらのRoute Handlerを内部APIとして呼ぶことは禁止する。
 

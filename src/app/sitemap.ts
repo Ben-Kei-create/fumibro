@@ -1,6 +1,7 @@
 import type { MetadataRoute } from "next";
 
 import { getPublicEnvironment } from "@/lib/env/public";
+import { getPublicImages } from "@/modules/images/application/get-public-images";
 import {
   getPublicLibrary,
   getPublicPosts,
@@ -11,14 +12,21 @@ import {
 export const dynamic = "force-dynamic";
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
-  const [{ NEXT_PUBLIC_SITE_URL: siteUrl }, posts, projects, works, library] =
-    await Promise.all([
-      Promise.resolve(getPublicEnvironment()),
-      getPublicPosts({ limit: 100 }),
-      getPublicProjects(),
-      getPublicWorks(),
-      getPublicLibrary(),
-    ]);
+  const [
+    { NEXT_PUBLIC_SITE_URL: siteUrl },
+    posts,
+    projects,
+    works,
+    library,
+    images,
+  ] = await Promise.all([
+    Promise.resolve(getPublicEnvironment()),
+    getPublicPosts({ limit: 100 }),
+    getPublicProjects(),
+    getPublicWorks(),
+    getPublicLibrary(),
+    getPublicImages(),
+  ]);
   const absolute = (path: string) => new URL(path, siteUrl).toString();
   const staticPaths = [
     "/",
@@ -31,6 +39,7 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     "/contact",
     "/privacy",
     "/search",
+    "/images",
   ];
 
   return [
@@ -49,6 +58,11 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     ...library.map((item) => ({
       lastModified: new Date(item.publishedAt),
       url: absolute(`/library/${item.slug}`),
+    })),
+    ...images.map((item) => ({
+      images: [item.display.url],
+      lastModified: new Date(item.publishedAt),
+      url: absolute(`/images/${item.slug}`),
     })),
   ];
 }

@@ -24,6 +24,10 @@ const uploadMetadataSchema = z.object({
       .positive()
       .max(MAX_IMAGE_UPLOAD_BYTES),
     object_path: z.string().min(1).max(900),
+    purpose: z
+      .enum(["content", "downloadable-image"])
+      .optional()
+      .default("content"),
   }),
 });
 
@@ -31,6 +35,7 @@ type ReadyImage = {
   altText: string | null;
   assetId: string;
   displayUrl: string;
+  downloadReady: boolean;
   thumbnailUrl: string;
 };
 
@@ -47,7 +52,7 @@ async function getReadyImage(
     .from("asset_variants")
     .select("variant_role,object_path")
     .eq("asset_id", assetId)
-    .in("variant_role", ["display", "thumbnail"]);
+    .in("variant_role", ["display", "thumbnail", "download"]);
 
   if (error) {
     throw new MediaApplicationError(
@@ -77,6 +82,8 @@ async function getReadyImage(
     assetId,
     displayUrl: service.storage.from("public-media").getPublicUrl(displayPath)
       .data.publicUrl,
+    downloadReady:
+      variants?.some((variant) => variant.variant_role === "download") ?? false,
     thumbnailUrl: service.storage
       .from("public-media")
       .getPublicUrl(thumbnailPath).data.publicUrl,
@@ -151,6 +158,7 @@ export async function completeImageUpload(input: unknown): Promise<ReadyImage> {
   const reservation = uploadMetadata.data.upload;
   const displayPath = `images/${existing.id}/display.webp`;
   const thumbnailPath = `images/${existing.id}/thumbnail.webp`;
+  const downloadPath = `images/${existing.id}/download.webp`;
   let shouldDeleteOriginal = false;
 
   try {
@@ -214,6 +222,24 @@ export async function completeImageUpload(input: unknown): Promise<ReadyImage> {
       );
     }
 
+    if (reservation.purpose === "downloadable-image") {
+      const downloadUpload = await service.storage
+        .from("private-downloads")
+        .upload(downloadPath, processed.download.buffer, {
+          cacheControl: "3600",
+          contentType: "image/webp",
+          upsert: true,
+        });
+
+      if (downloadUpload.error) {
+        throw new MediaApplicationError(
+          "download_upload_failed",
+          502,
+          "配布用画像を保存できませんでした。",
+        );
+      }
+    }
+
     const { error: finalizeError } = await service.rpc(
       "service_finalize_processed_image",
       {
@@ -245,11 +271,35 @@ export async function completeImageUpload(input: unknown): Promise<ReadyImage> {
       );
     }
 
+    if (reservation.purpose === "downloadable-image") {
+      const { error: downloadFinalizeError } = await service.rpc(
+        "service_finalize_downloadable_image_variant",
+        {
+          p_asset_id: existing.id,
+          p_download_checksum_sha256: sha256(processed.download.buffer),
+          p_download_height: processed.download.height,
+          p_download_path: downloadPath,
+          p_download_size_bytes: processed.download.buffer.length,
+          p_download_width: processed.download.width,
+        },
+      );
+      if (downloadFinalizeError) {
+        throw new MediaApplicationError(
+          "download_finalize_failed",
+          500,
+          "配布用画像を確定できませんでした。",
+        );
+      }
+    }
+
     return getReadyImage(existing.id, existing.alt_text);
   } catch (error) {
     await service.storage
       .from("public-media")
       .remove([displayPath, thumbnailPath]);
+    if (reservation.purpose === "downloadable-image") {
+      await service.storage.from("private-downloads").remove([downloadPath]);
+    }
 
     if (error instanceof ImageValidationError || shouldDeleteOriginal) {
       shouldDeleteOriginal = true;

@@ -47,6 +47,18 @@ test("signed-out AI Handoff Inbox is protected by Admin login", async ({
   ).toBeVisible();
 });
 
+test("Images gallery is public and its Admin is protected", async ({
+  page,
+}) => {
+  await page.goto("/images");
+  await expect(
+    page.getByRole("heading", { level: 1, name: "FUMIBRO Images" }),
+  ).toBeVisible();
+  await expect(page.getByText("ADVERTISEMENT SPACE")).toHaveCount(0);
+  await page.goto("/admin/images");
+  await expect(page).toHaveURL(/\/admin\/login\?next=%2Fadmin%2Fimages/u);
+});
+
 test("invalid recovery credentials fail closed", async ({ page }) => {
   await page.goto("/auth/confirm?token_hash=invalid&type=signup");
   await expect(page).toHaveURL(/\/admin\/forgot-password\?error=invalid_link/u);

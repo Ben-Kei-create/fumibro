@@ -16,6 +16,7 @@ const navigation = [
   { href: "/admin", label: "Dashboard" },
   { href: "/admin/quick", label: "Quick投稿" },
   { href: "/admin/ai-inbox", label: "AI Inbox" },
+  { href: "/admin/images", label: "Images" },
   { href: "/admin/posts", label: "Blog" },
   { href: "/admin/works", label: "Works" },
   { href: "/admin/library", label: "Library" },

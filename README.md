@@ -159,6 +159,14 @@ actual decode, dimensions, animation, and a 40-megapixel limit. Only stripped,
 compressed WebP display and thumbnail variants are written to `public-media`.
 Authenticated browsers cannot write that public bucket directly.
 
+FUMIBRO Images (`/images`, `/admin/images`) reuses the same validation and adds
+an EXIF-stripped standard-resolution WebP `download` variant in
+`private-downloads`. Bulk upload accepts at most 30 images per batch. Raw
+masters are never distributed. Downloads use 60-second signed URLs, are rate
+limited, and count issuance without storing raw IP addresses. The optional
+`NEXT_PUBLIC_ADSENSE_CLIENT_ID` stays unset until approval; AdSlot renders
+nothing when absent, and Portfolio never renders an AdSlot.
+
 Published business-card images reuse the validated media asset. PNG downloads
 prefer a stored `card_png` variant and otherwise convert the processed public
 display image to PNG in the server-only download route; private originals are
@@ -215,4 +223,6 @@ exports. Phase 2 adds the human-reviewed AI Handoff Inbox at
 AAL2 Admin converts them into canonical Blog, Works, Library, Portfolio, or
 notice drafts. Provider fetchers are not included: the application still does
 not connect Gemini, Claude, ChatGPT, Gmail, or KDP directly. Mail delivery,
-payments, AdSense, Maps API, and social integrations also remain disabled.
+payments, AdSense serving, Maps API, and social integrations also remain
+disabled. Phase 2 also adds FUMIBRO Images as a separate free-download gallery;
+its ad component remains inert until a later explicit AdSense approval.

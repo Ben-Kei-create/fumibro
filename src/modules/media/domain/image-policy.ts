@@ -15,6 +15,10 @@ export const imageUploadRequestSchema = z.object({
   altText: z.string().trim().max(500).optional().default(""),
   filename: z.string().trim().min(1).max(255),
   mimeType: z.enum(allowedImageMimeTypes),
+  purpose: z
+    .enum(["content", "downloadable-image"])
+    .optional()
+    .default("content"),
   sizeBytes: z.number().int().min(1).max(MAX_IMAGE_UPLOAD_BYTES),
 });
 

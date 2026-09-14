@@ -175,6 +175,19 @@ Phase 1ではAdminナビゲーションに「未処理」badgeを表示する。
 
 Phase 2ではAI Handoff Inboxの`pending`件数も同じ未処理badgeへ追加する。
 
+## Phase 2 FUMIBRO Images境界
+
+`downloadable_images`は無料配布ギャラリーの正本であり、案件獲得用のPortfolioとは分離する。Portfolioは引き続きWorksの広告なしprojectionで、Imagesの広告設定を参照しない。
+
+- `/admin/images`の複数uploadは既存asset pipelineを再利用し、1回30枚まで扱う。
+- originalは`private-originals`、表示・thumbnailは`public-media`、EXIF除去済み標準配布版は`private-downloads`へ保存する。
+- `asset_id`と`download_asset_id`はPhase 2では同じassetを指せる。配布物は`download` variant、raw masterは`original` variantとして区別する。
+- KDP由来の新規行は、入力指定にかかわらず`review_required`から始める。`cleared`へ変更したAAL2 Adminだけが公開できる。
+- 公開条件は`published + published_at <= now() + cleared + deleted_at is null`。配布にはさらに`download_enabled`を要求する。
+- download routeは生IPを保存せず、匿名visitor由来HMACでrate limitし、60秒の署名URLを発行する。配布回数だけを集計する。
+- 各詳細には固有説明と用途例を必須化し、canonical、Open Graph、ImageObject JSON-LD、image sitemapを出力する。
+- AdSlotは有効な`NEXT_PUBLIC_ADSENSE_CLIENT_ID`が設定されたときだけDOMを生成する。ImagesでもDownload直前直後には置かず、Portfolioではrenderしない。
+
 ## Phase 2 AI Handoff Inbox境界
 
 AI Handoff InboxはPhase 2で実装する。AIや外部取込は公開CMSテーブルへ直接書き込まず、RLS保護された`public.ai_handoff_inbox`へservice-only RPCで候補と出所を渡す。`service_role`にもInboxテーブルの直接書込み権限を与えない。

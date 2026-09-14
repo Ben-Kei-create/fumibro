@@ -16,6 +16,7 @@ type ProcessedVariant = {
 };
 
 export type ProcessedImage = {
+  download: ProcessedVariant;
   display: ProcessedVariant;
   height: number;
   mimeType: AllowedImageMimeType;
@@ -105,12 +106,14 @@ export async function processUploadedImage(
   );
 
   try {
-    const [display, thumbnail] = await Promise.all([
+    const [display, thumbnail, download] = await Promise.all([
       makeVariant(input, 1920, 82),
       makeVariant(input, 640, 76),
+      makeVariant(input, 2560, 88),
     ]);
 
     return {
+      download,
       display,
       height: dimensions.height,
       mimeType: detectedMimeType,
