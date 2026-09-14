@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 
-import { requestPasswordResetAction } from "@/modules/auth/application/actions";
+import { ForgotPasswordForm } from "@/modules/auth/ui/forgot-password-form";
 
 export const metadata: Metadata = {
   robots: { follow: false, index: false },
@@ -42,24 +42,7 @@ export default async function ForgotPasswordPage({
             該当する場合は、再設定用リンクをメールで確認してください。
           </p>
         ) : (
-          <form action={requestPasswordResetAction} className="mt-7 space-y-5">
-            <div>
-              <label
-                className="text-sm font-medium text-stone-800"
-                htmlFor="email"
-              >
-                メールアドレス
-              </label>
-              <input
-                autoComplete="email"
-                className="mt-2 min-h-12 w-full rounded-lg border border-stone-300 px-3"
-                id="email"
-                maxLength={254}
-                name="email"
-                required
-                type="email"
-              />
-            </div>
+          <>
             {invalidLink ? (
               <p
                 className="rounded-lg bg-red-50 p-3 text-sm text-red-800"
@@ -84,10 +67,8 @@ export default async function ForgotPasswordPage({
                 現在メールを送信できません。しばらく待ってから再試行してください。
               </p>
             ) : null}
-            <button className="button-primary w-full" type="submit">
-              再設定メールを送る
-            </button>
-          </form>
+            <ForgotPasswordForm />
+          </>
         )}
 
         <Link

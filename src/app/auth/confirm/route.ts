@@ -1,5 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
 
+import { getPublicEnvironment } from "@/lib/env/public";
 import { establishAdminRecoverySession } from "@/modules/auth/application/establish-admin-recovery-session";
 import {
   ADMIN_UPDATE_PASSWORD_PATH,
@@ -13,21 +14,22 @@ function noStoreRedirect(url: URL) {
 }
 
 export async function GET(request: NextRequest) {
+  const siteUrl = getPublicEnvironment().NEXT_PUBLIC_SITE_URL;
   const credential = readAdminRecoveryCredential(request.nextUrl.searchParams);
 
   if (!credential) {
     return noStoreRedirect(
-      new URL("/admin/forgot-password?error=invalid_link", request.url),
+      new URL("/admin/forgot-password?error=invalid_link", siteUrl),
     );
   }
 
   const established = await establishAdminRecoverySession(credential);
   if (!established) {
     return noStoreRedirect(
-      new URL("/admin/forgot-password?error=invalid_link", request.url),
+      new URL("/admin/forgot-password?error=invalid_link", siteUrl),
     );
   }
 
   // Never forward the one-time token or PKCE code to the password form.
-  return noStoreRedirect(new URL(ADMIN_UPDATE_PASSWORD_PATH, request.url));
+  return noStoreRedirect(new URL(ADMIN_UPDATE_PASSWORD_PATH, siteUrl));
 }

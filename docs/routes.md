@@ -57,6 +57,7 @@ Projectで分類されたBlog、Works、Libraryのcanonical URLは、それぞ�
 | `/admin/update-password` | 認証済みRecovery sessionで新passwordを設定     |
 
 認証ページからAdminデータを返さない。認証済みAdminページと応答は共有cacheやISRを使わず、cookieを書き換える応答へ`private, no-store`相当を適用する。
+Admin配下と`/auth/confirm`・`/auth/callback`は、PKCE cookieを同一originへ固定するため`NEXT_PUBLIC_SITE_URL`へ正規化する。Vercelの一意なdeployment URLから開いた場合も、固定Preview alias上の同じpathとqueryへ307 redirectする。
 
 ## Admin保護ルート
 

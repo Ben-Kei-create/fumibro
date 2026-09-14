@@ -35,6 +35,8 @@
 - password変更は認証・Admin権限を再確認するServer Actionから`updateUser()`を呼び、完了後にlocal sessionを破棄する。新passwordで再loginし、TOTPでAAL2へ到達する。
 - `/auth/callback`とPKCE code exchangeは、既発行リンクおよび標準テンプレート向けの互換経路に限定する。primary設計はtoken hashである。
 - 2026年6月3日以降に作成されたFree Projectは、Supabase標準SMTPのままAuth email templateを変更できない。token-hash経路を有効化するには、課金承認済みplanまたは管理者が承認したcustom SMTPが必要である。外部メールproviderを無断で追加しない。
+- Free標準SMTPのPKCE互換経路では、Recovery申請をBrowser clientから開始し、code verifierをfirst-party cookieへ保存する。Admin画面とAuth callbackは`NEXT_PUBLIC_SITE_URL`の単一originへ307 redirectし、一意のVercel deployment URLと固定Preview aliasの間でverifier cookieが分断されることを防ぐ。
+- Recoveryメールは申請に使った同じブラウザで開く。異なる端末・ブラウザではPKCE verifierを共有できないため、token-hash templateを利用できるまでサポート対象外とする。
 
 ## 認可境界
 

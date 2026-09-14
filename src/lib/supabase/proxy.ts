@@ -2,6 +2,10 @@ import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 
 import { getPublicEnvironment } from "@/lib/env/public";
+import {
+  getCanonicalAdminUrl,
+  readForwardedRequestOrigin,
+} from "@/modules/auth/domain/canonical-admin-url";
 
 const ADMIN_LOGIN_PATH = "/admin/login";
 const ADMIN_MFA_PATH = "/admin/mfa";
@@ -9,8 +13,23 @@ const ADMIN_FORGOT_PASSWORD_PATH = "/admin/forgot-password";
 const ADMIN_UPDATE_PASSWORD_PATH = "/admin/update-password";
 
 export async function updateSupabaseSession(request: NextRequest) {
-  let response = NextResponse.next({ request });
   const environment = getPublicEnvironment();
+  const canonicalUrl = getCanonicalAdminUrl(
+    request.nextUrl,
+    environment.NEXT_PUBLIC_SITE_URL,
+    readForwardedRequestOrigin(request.nextUrl, request.headers),
+  );
+
+  if (canonicalUrl) {
+    const canonicalResponse = NextResponse.redirect(canonicalUrl, 307);
+    canonicalResponse.headers.set(
+      "Cache-Control",
+      "private, no-store, max-age=0",
+    );
+    return canonicalResponse;
+  }
+
+  let response = NextResponse.next({ request });
 
   const supabase = createServerClient(
     environment.NEXT_PUBLIC_SUPABASE_URL,
