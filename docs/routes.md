@@ -62,6 +62,7 @@ Projectで分類されたBlog、Works、Libraryのcanonical URLは、それぞ�
 | -------------------------------------- | -------------------------------------------------- |
 | `/admin`                               | Dashboard、未処理総数、直近操作                    |
 | `/admin/quick`                         | スマホ向け短文、本文、画像1枚、Project、タグ、公開 |
+| `/admin/ai-inbox`                      | AI候補の確認、下書き変換、無視                     |
 | `/admin/posts`                         | 投稿一覧、状態・予約・Trash filter                 |
 | `/admin/posts/new`                     | 新規投稿                                           |
 | `/admin/posts/[id]/edit`               | 編集、予約、通常更新、更新再公開                   |
@@ -102,7 +103,7 @@ Phase 1の未処理badgeは次を表示する。
 - desktop、mobileの両navigationで表示
 - `99+`上限と、実際の意味が分かるaccessible label
 
-Phase 2では`/admin/handoff-inbox`を追加予定だが、Phase 1ではroute、page、メニュー項目を作らない。
+Phase 2では`/admin/ai-inbox`を追加し、AAL2 Adminだけが候補確認、下書き変換、無視を実行できる。
 
 ## Route Handler
 
@@ -144,7 +145,7 @@ Phase 2では`/admin/handoff-inbox`を追加予定だが、Phase 1ではroute、
 ## Phase 1に存在しないroute
 
 - 外部AI質問回答API
-- AI Handoff Inbox APIと`/admin/handoff-inbox`
+- Gemini、Claude、ChatGPT、Gmail、KDPのprovider callback
 - Gmail、KDP、ChatGPT、Claude、Gemini import callback
 - 決済webhook、注文、購入者download grant
 - メール送信API

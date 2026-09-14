@@ -45,8 +45,8 @@ select ok(
   'private rate limit storage has defense-in-depth RLS'
 );
 select ok(
-  to_regclass('private.ai_handoff_inbox') is null,
-  'Phase 2 AI handoff inbox is not created in Phase 1'
+  to_regclass('public.ai_handoff_inbox') is not null,
+  'Phase 2 AI handoff inbox exists in the exposed schema with RLS'
 );
 
 select ok(

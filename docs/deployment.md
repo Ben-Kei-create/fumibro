@@ -46,6 +46,8 @@ npm run db:test
 6. Supabase Security AdvisorとPerformance Advisorを確認し、重大項目を解消する。
 7. Productionをdeployし、`/robots.txt`、`/sitemap.xml`、`/feed.xml`、`/privacy`を含むsmoke testを行う。
 
+Phase 2 AI Handoff Inboxを含むPreviewでは、追加で`/admin/ai-inbox`のAAL2保護、service-only受信RPCの冪等性、下書き変換、監査event、外部roleの直接table write拒否を確認する。provider由来の実データは、Previewのschema/UI検証後に別承認で投入する。
+
 ## Migration規則
 
 - 既存列やtypeを同時に破壊的変更しない。expand → application移行 → contractの順にreleaseを分ける。

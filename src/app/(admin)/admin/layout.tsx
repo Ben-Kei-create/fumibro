@@ -15,6 +15,7 @@ export const metadata: Metadata = {
 const navigation = [
   { href: "/admin", label: "Dashboard" },
   { href: "/admin/quick", label: "Quick投稿" },
+  { href: "/admin/ai-inbox", label: "AI Inbox" },
   { href: "/admin/posts", label: "Blog" },
   { href: "/admin/works", label: "Works" },
   { href: "/admin/library", label: "Library" },
@@ -32,6 +33,12 @@ function formatNotificationCount(count: number): string {
 export default async function AdminLayout({ children }: LayoutProps<"/admin">) {
   const summary = await getAdminDashboardSummary();
   const notifications = [
+    {
+      count: summary.pendingAiHandoffCount,
+      href: "/admin/ai-inbox?status=pending",
+      label: "AI候補",
+      meaning: "確認待ちAI候補",
+    },
     {
       count: summary.pendingCommentCount,
       href: "/admin/comments?status=pending",

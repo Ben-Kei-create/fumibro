@@ -45,9 +45,12 @@ changelog and official documentation.
 - Projects share one CMS and schema. Visual variation is selected with
   `projects.theme_key` through `src/themes/registry.ts`; themes must not fork the
   data model.
-- Future providers are accessed only through ports in `src/integrations/ports`.
-  Phase 1 must not implement Gemini, Gmail, KDP, Claude, ChatGPT, payment, email,
-  social, Maps API, or AdSense integrations.
+- External providers are accessed only through ports in `src/integrations/ports`.
+  Phase 2 includes the human-reviewed AI Handoff Inbox, but does not implement
+  Gemini, Gmail, KDP, Claude, or ChatGPT fetchers. Payment, email, social, Maps
+  API, and AdSense integrations also remain outside the current boundary.
+- AI/import workers may enqueue only through the service-only Inbox command.
+  They never receive table-write grants and never publish canonical content.
 
 ## Data invariants
 

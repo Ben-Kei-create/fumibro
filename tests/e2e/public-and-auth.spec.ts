@@ -37,6 +37,16 @@ test("signed-out Admin is redirected to the login form", async ({ page }) => {
   await expect(page.getByLabel("パスワード")).toBeVisible();
 });
 
+test("signed-out AI Handoff Inbox is protected by Admin login", async ({
+  page,
+}) => {
+  await page.goto("/admin/ai-inbox");
+  await expect(page).toHaveURL(/\/admin\/login\?next=%2Fadmin%2Fai-inbox/u);
+  await expect(
+    page.getByRole("heading", { name: "管理者ログイン" }),
+  ).toBeVisible();
+});
+
 test("invalid recovery credentials fail closed", async ({ page }) => {
   await page.goto("/auth/confirm?token_hash=invalid&type=signup");
   await expect(page).toHaveURL(/\/admin\/forgot-password\?error=invalid_link/u);

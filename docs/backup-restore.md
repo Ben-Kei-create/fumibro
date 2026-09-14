@@ -46,6 +46,8 @@ pg_dump \
 - Works
 - Portfolio projection
 
+AI Handoff Inboxは本文候補やsource payloadを含むため、通常のDB backup対象には含めるが、Phase 1のportable content exportには混在させない。将来Inbox専用exportを追加する場合はAdmin限定・no-storeとし、source payloadを個人データ相当として保護する。
+
 JSONの`schemaVersion`、`exportedAt`、stable ID、`source_system`、`source_external_id`を保持する。CSVは表計算での確認用、JSONは将来のimport/migration用とする。
 
 ## Restore rehearsal

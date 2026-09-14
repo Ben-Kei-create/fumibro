@@ -21,8 +21,8 @@ export type ImportCandidate = Readonly<{
 }>;
 
 /**
- * Phase 1 boundary only. Providers and the human-reviewed AI Handoff Inbox are
- * deliberately deferred to Phase 2. Implementations must never publish or
+ * Provider discovery boundary. Phase 2 providers enqueue candidates through
+ * the service-only AI Handoff command. Implementations must never publish or
  * write to content_items directly.
  */
 export interface ContentImportProvider {

@@ -167,6 +167,11 @@ select is(
   'duplicate likes do not inflate the total'
 );
 
+create temporary table tap_site_counter_before as
+select total
+from public.visit_counters
+where scope_key = 'site';
+
 select is(
   (select accepted from public.service_register_site_visit(
     decode(repeat('cd', 32), 'hex')
@@ -183,7 +188,7 @@ select is(
 );
 select is(
   (select total from public.visit_counters where scope_key = 'site'),
-  1::bigint,
+  (select total + 1 from tap_site_counter_before),
   'duplicate site visits do not inflate the total'
 );
 

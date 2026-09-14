@@ -186,9 +186,7 @@ badgeは件数だけを表示し、問い合わせ本文、reply-to、コメン�
 
 ## AIと外部取込
 
-Phase 1でAI Handoff Inboxを実装しない。将来実装時もAIや外部workerへ公開テーブルの直接書込み権限を与えない。
-
-Phase 2の候補は非公開stagingへ入り、Adminが`公開`、`下書き`、`無視`のいずれかを選ぶ。公開・下書き適用時は次を必須とする。
+Phase 2のAI Handoff候補はRLS保護されたstagingへservice-only RPCから入り、外部workerへInboxまたは公開テーブルの直接書込み権限を与えない。候補は常に`pending`で、Adminが下書き変換または`無視`を選ぶ。下書き適用時は次を必須とする。
 
 - source冪等性確認
 - schema検証
@@ -197,6 +195,8 @@ Phase 2の候補は非公開stagingへ入り、Adminが`公開`、`下書き`、
 - 通常のApplication Command
 - RLSと公開条件
 - 監査
+
+`SECURITY DEFINER`関数は`search_path = pg_catalog`を固定し、PUBLIC EXECUTEを剥奪する。受信RPCだけを`service_role`へ、review RPCだけを`authenticated`へ付与し、後者は関数内でAAL2 Adminを再検証する。`service_role`にもInboxテーブル権限は付与しない。
 
 AI出力を信頼済みHTML、SQL、URL、filenameとして扱わない。
 

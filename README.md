@@ -210,7 +210,9 @@ the recovery path after a completed purge.
 
 Phase 1 includes the CMS, public pages, Admin, Privacy, Contact storage,
 revisions, media processing, interactions, PGroonga search, RSS, and portable
-exports. It provides ports and idempotent source metadata for future imports.
-It does not connect AI providers, Gmail/KDP, mail delivery, payments, AdSense,
-Maps API, or social networks. The first planned Phase 2 feature is the
-human-reviewed AI Handoff Inbox.
+exports. Phase 2 adds the human-reviewed AI Handoff Inbox at
+`/admin/ai-inbox`. A service-only idempotent RPC accepts candidates, and an
+AAL2 Admin converts them into canonical Blog, Works, Library, Portfolio, or
+notice drafts. Provider fetchers are not included: the application still does
+not connect Gemini, Claude, ChatGPT, Gmail, or KDP directly. Mail delivery,
+payments, AdSense, Maps API, and social integrations also remain disabled.
