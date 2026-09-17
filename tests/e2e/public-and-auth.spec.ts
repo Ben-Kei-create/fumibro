@@ -14,6 +14,24 @@ test("public Home exposes the Phase 1 shell without secrets", async ({
   await expect(
     page.getByRole("heading", { name: "FUMIBROに質問" }),
   ).toBeVisible();
+  await expect(
+    page.getByRole("heading", { level: 2, name: "最新投稿" }),
+  ).toBeVisible();
+  await expect(
+    page.getByRole("heading", { level: 2, name: "掲示板" }),
+  ).toBeVisible();
+  await expect(
+    page.getByRole("heading", { level: 2, name: "最近の作品" }),
+  ).toBeVisible();
+  await expect(
+    page.getByRole("link", { name: "Works 完成した本・教材・アプリ" }),
+  ).toBeVisible();
+  await expect(
+    page.getByRole("link", { name: "Library PDFや配布コンテンツ" }),
+  ).toBeVisible();
+  await expect(
+    page.getByRole("link", { name: "Images ダウンロードできる画像" }),
+  ).toBeVisible();
   await expect(page.getByRole("button", { name: "準備中" })).toBeDisabled();
   await expect(page.getByRole("link", { name: "Privacy" })).toBeVisible();
 
