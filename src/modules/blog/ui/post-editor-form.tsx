@@ -71,6 +71,11 @@ export function PostEditorForm({
         type="hidden"
         value={initialPost?.lockVersion ?? ""}
       />
+      <input
+        name="originalImageAssetId"
+        type="hidden"
+        value={initialPost?.image?.assetId ?? ""}
+      />
 
       {state.status === "error" ? (
         <p
@@ -325,7 +330,10 @@ export function PostEditorForm({
 
       <section className="space-y-5 rounded-2xl border border-stone-200 bg-white p-5 shadow-sm sm:p-7">
         <h2 className="text-lg font-bold text-stone-950">画像・追加情報</h2>
-        <ImageUploader initialImage={initialPost?.image} />
+        <ImageUploader
+          initialImage={initialPost?.image}
+          replacementDeletesOriginal
+        />
         <div>
           <label
             className="text-sm font-medium text-stone-800"

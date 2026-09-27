@@ -173,19 +173,26 @@ Phase 1ではAdminナビゲーションに「未処理」badgeを表示する。
 - 処理後は対象Queryを再検証し、desktopとmobileの両方で直ちに反映する。
 - 視覚表示だけにせず、スクリーンリーダー用ラベルを付け、表示上限は`99+`とする。
 
-Phase 2でAI Handoff Inboxを導入した場合、その`pending`件数を同じ未処理badgeへ追加する。Phase 1のbadgeへ架空のAI件数は含めない。
+Phase 2ではAI Handoff Inboxの`pending`件数も同じ未処理badgeへ追加する。
+
+## Phase 2 FUMIBRO Images境界
+
+`downloadable_images`は無料配布ギャラリーの正本であり、案件獲得用のPortfolioとは分離する。Portfolioは引き続きWorksの広告なしprojectionで、Imagesの広告設定を参照しない。
+
+- `/admin/images`の複数uploadは既存asset pipelineを再利用し、1回30枚まで扱う。
+- originalは`private-originals`、表示・thumbnailは`public-media`、EXIF除去済み標準配布版は`private-downloads`へ保存する。
+- `asset_id`と`download_asset_id`はPhase 2では同じassetを指せる。配布物は`download` variant、raw masterは`original` variantとして区別する。
+- KDP由来の新規行は、入力指定にかかわらず`review_required`から始める。`cleared`へ変更したAAL2 Adminだけが公開できる。
+- 公開条件は`published + published_at <= now() + cleared + deleted_at is null`。配布にはさらに`download_enabled`を要求する。
+- download routeは生IPを保存せず、匿名visitor由来HMACでrate limitし、60秒の署名URLを発行する。配布回数だけを集計する。
+- 各詳細には固有説明と用途例を必須化し、canonical、Open Graph、ImageObject JSON-LD、image sitemapを出力する。
+- AdSlotは有効な`NEXT_PUBLIC_ADSENSE_CLIENT_ID`が設定されたときだけDOMを生成する。ImagesでもDownload直前直後には置かず、Portfolioではrenderしない。
 
 ## Phase 2 AI Handoff Inbox境界
 
-AI Handoff InboxはPhase 2で実装する。Phase 1では実テーブル、受信API、Admin画面、バックグラウンド処理を作らない。
+AI Handoff InboxはPhase 2で実装する。AIや外部取込は公開CMSテーブルへ直接書き込まず、RLS保護された`public.ai_handoff_inbox`へservice-only RPCで候補と出所を渡す。`service_role`にもInboxテーブルの直接書込み権限を与えない。
 
-Phase 2では、AIや外部取込が公開テーブルへ直接書き込まず、非公開stagingへ候補と出所を渡す。管理者は候補を確認し、必ず次のいずれかを選ぶ。
-
-- `公開`: 検証とRevision作成後、公開日時を伴って`content_items`へ反映
-- `下書き`: `draft`として`content_items`へ反映
-- `無視`: 公開コンテンツへ反映せず、監査可能な処理済み状態にする
-
-適用時は`source_system + source_external_id`で冪等性を確認する。AIは認可、RLS、公開判定、Revision作成を迂回できない。将来のstaging名として`private.ai_handoffs`を候補とするが、Phase 1 Migrationへは含めない。
+候補は必ず`pending`から始まり、AAL2 Adminが`Blog / Works / Library / Portfolio / 掲示板`の下書き化または`無視`を選ぶ。変換は既存Database Commandを再利用し、公開は通常CMSの別操作とする。`source_system + source_external_id`で冪等性を確保し、受信、変換、無視、失敗を監査する。詳細は[ADR-0005](./adr/0005-ai-handoff-inbox.md)を参照する。
 
 ## 匿名visitor、👍、カウンター
 
@@ -238,7 +245,7 @@ Privacyページでは少なくとも次を説明する。
 ## Phase 1で実装しないもの
 
 - Gemini等を使う質問箱の回答処理
-- Phase 2 AI Handoff Inboxの実テーブル、API、UI
+- Gemini、Claude、ChatGPT、Gmail、KDPからの自動取得adapter
 - Gmail、KDP、ChatGPT履歴等の自動取込
 - TMDB、Amazonアソシエイト、SNS連携
 - Google Maps API

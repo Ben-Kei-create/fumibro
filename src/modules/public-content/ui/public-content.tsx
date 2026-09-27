@@ -1,6 +1,8 @@
 import Image from "next/image";
 import Link from "next/link";
 
+import { getPublicEnvironment } from "@/lib/env/public";
+
 import type {
   PublicContentSummaryDto,
   PublicImageDto,
@@ -274,13 +276,12 @@ export function ContentSummaryCard({
   );
 }
 
-export function AdSlot() {
+export function AdSlot({ enabled = true }: { enabled?: boolean }) {
+  const clientId = getPublicEnvironment().NEXT_PUBLIC_ADSENSE_CLIENT_ID;
+  if (!enabled || !clientId) return null;
   return (
-    <aside
-      aria-label="将来の広告掲載枠"
-      className="rounded-xl border border-dashed border-stone-300 px-4 py-3 text-center text-xs tracking-wide text-stone-400"
-    >
-      ADVERTISEMENT SPACE
+    <aside aria-label="広告" className="min-h-24" data-ad-client={clientId}>
+      <span className="sr-only">広告</span>
     </aside>
   );
 }

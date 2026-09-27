@@ -48,6 +48,13 @@ describe("image upload policy", () => {
       mimeType: "image/jpeg",
       width: 100,
     });
+    const downloadMetadata = await sharp(processed.download.buffer).metadata();
+    expect(downloadMetadata).toMatchObject({
+      format: "webp",
+      height: 50,
+      width: 100,
+    });
+    expect(downloadMetadata.exif).toBeUndefined();
     expect(displayMetadata).toMatchObject({
       format: "webp",
       height: 50,

@@ -112,6 +112,30 @@ npm run test:e2e
 CI runs the first four gates on Node 24 for every pull request and push to
 `main`. Database tests require a running local Supabase stack.
 
+## Admin password recovery
+
+FUMIBROのSSR Recovery endpointは`/auth/confirm`である。Recovery emailは
+`token_hash`と`type=recovery`をこのendpointへ送り、server側の`verifyOtp()`が
+cookie sessionを確立してから`/admin/update-password`へ移動する。
+
+Recovery email templateを変更できる環境では、Reset Password templateの
+リンクを次の形にする。Site URLは対象environmentのFUMIBRO originに設定する。
+
+```html
+<a
+  href="{{ .SiteURL }}/auth/confirm?token_hash={{ .TokenHash }}&type=recovery&next=/admin/update-password"
+>
+  Reset password
+</a>
+```
+
+2026年6月3日以降に作成したFree Projectでは、Supabase標準SMTPのままAuth
+email templateを変更できない。FUMIBRO Projectがこの条件に該当する間は、
+同じ`/auth/confirm` endpointがdefault templateのPKCE codeを互換処理する。
+token-hash経路を有効化するには、承認済みcustom SMTPまたはpaid planが必要。
+Recovery emailは標準SMTPのrate limitを消費するため、Preview E2Eは実装・build・
+redirect設定を先に確認し、1通ずつ実施する。
+
 ## Supabase Storage
 
 The buckets have non-overlapping duties:
@@ -134,6 +158,19 @@ The browser receives a short-lived upload token for a UUID path in
 actual decode, dimensions, animation, and a 40-megapixel limit. Only stripped,
 compressed WebP display and thumbnail variants are written to `public-media`.
 Authenticated browsers cannot write that public bucket directly.
+The Blog editor exposes one top-image slot. Replacing or clearing it removes
+the previous original, display, and thumbnail objects through the Storage API,
+then deletes their asset metadata and scrubs that image from the same post's
+revision snapshots. Service-only RPCs recheck references and record the erasure
+in the Admin audit log; browser roles cannot call them.
+
+FUMIBRO Images (`/images`, `/admin/images`) reuses the same validation and adds
+an EXIF-stripped standard-resolution WebP `download` variant in
+`private-downloads`. Bulk upload accepts at most 30 images per batch. Raw
+masters are never distributed. Downloads use 60-second signed URLs, are rate
+limited, and count issuance without storing raw IP addresses. The optional
+`NEXT_PUBLIC_ADSENSE_CLIENT_ID` stays unset until approval; AdSlot renders
+nothing when absent, and Portfolio never renders an AdSlot.
 
 Published business-card images reuse the validated media asset. PNG downloads
 prefer a stored `card_png` variant and otherwise convert the processed public
@@ -155,6 +192,9 @@ check.
 4. Apply and verify Supabase migrations before promoting the matching app build.
 5. Run the quality gates, deploy a Preview, perform the acceptance checklist,
    then promote to Production.
+
+Milestone 8のPreviewは`codex/preview`ブランチへpushして確認する。`main`へのpushはProduction用の明示承認後のみ行う。
+GitHub Pull Request上のVercelチェックはPreviewの検証結果として扱い、承認前にProductionへpromoteしない。
 
 Cloud project creation is intentionally not automated by this repository. See
 [`docs/deployment.md`](docs/deployment.md) for the full release runbook.
@@ -183,7 +223,11 @@ the recovery path after a completed purge.
 
 Phase 1 includes the CMS, public pages, Admin, Privacy, Contact storage,
 revisions, media processing, interactions, PGroonga search, RSS, and portable
-exports. It provides ports and idempotent source metadata for future imports.
-It does not connect AI providers, Gmail/KDP, mail delivery, payments, AdSense,
-Maps API, or social networks. The first planned Phase 2 feature is the
-human-reviewed AI Handoff Inbox.
+exports. Phase 2 adds the human-reviewed AI Handoff Inbox at
+`/admin/ai-inbox`. A service-only idempotent RPC accepts candidates, and an
+AAL2 Admin converts them into canonical Blog, Works, Library, Portfolio, or
+notice drafts. Provider fetchers are not included: the application still does
+not connect Gemini, Claude, ChatGPT, Gmail, or KDP directly. Mail delivery,
+payments, AdSense serving, Maps API, and social integrations also remain
+disabled. Phase 2 also adds FUMIBRO Images as a separate free-download gallery;
+its ad component remains inert until a later explicit AdSense approval.

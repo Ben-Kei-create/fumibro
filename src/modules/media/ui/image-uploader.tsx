@@ -28,9 +28,13 @@ const readyImageSchema = z.object({
 
 type ImageUploaderProps = {
   initialImage?: SelectedImage;
+  replacementDeletesOriginal?: boolean;
 };
 
-export function ImageUploader({ initialImage }: ImageUploaderProps) {
+export function ImageUploader({
+  initialImage,
+  replacementDeletesOriginal = false,
+}: ImageUploaderProps) {
   const inputId = useId();
   const altTextId = useId();
   const [file, setFile] = useState<File>();
@@ -128,14 +132,18 @@ export function ImageUploader({ initialImage }: ImageUploaderProps) {
     setImage(undefined);
     setFile(undefined);
     setAltText("");
-    setStatus("投稿から画像を外します。元画像はMediaに保持されます。");
+    setStatus(
+      replacementDeletesOriginal
+        ? "投稿を保存すると、現在のトップ画像を完全削除します。"
+        : "保存すると、この項目から画像を外します。",
+    );
     setError(undefined);
   }
 
   return (
     <fieldset className="space-y-4 rounded-xl border border-stone-200 p-4">
       <legend className="px-1 text-sm font-semibold text-stone-900">
-        画像（最大1枚）
+        トップ画像（1枚のみ）
       </legend>
       <input name="imageAssetId" type="hidden" value={image?.assetId ?? ""} />
 
@@ -149,9 +157,9 @@ export function ImageUploader({ initialImage }: ImageUploaderProps) {
             src={image.thumbnailUrl}
             width={208}
           />
-          <div>
+          <div className="flex-1">
             <p className="text-sm leading-6 text-stone-600">
-              圧縮済み表示画像とthumbnailを生成済みです。元画像はprivateで保持されます。
+              この画像が一覧カードと記事詳細のトップに表示されます。
             </p>
             <button
               className="button-secondary mt-3"
@@ -159,57 +167,74 @@ export function ImageUploader({ initialImage }: ImageUploaderProps) {
               onClick={removeImage}
               type="button"
             >
-              投稿から外す
+              トップ画像を外す
             </button>
           </div>
         </div>
       ) : (
-        <div className="space-y-4">
-          <div>
-            <label
-              className="text-sm font-medium text-stone-800"
-              htmlFor={altTextId}
-            >
-              代替テキスト（任意）
-            </label>
-            <input
-              className="mt-2 min-h-12 w-full rounded-lg border border-stone-300 px-3"
-              id={altTextId}
-              maxLength={500}
-              onChange={(event) => setAltText(event.target.value)}
-              value={altText}
-            />
-          </div>
-          <div>
-            <label
-              className="text-sm font-medium text-stone-800"
-              htmlFor={inputId}
-            >
-              JPEG / PNG / WebP（20MB以下）
-            </label>
-            <input
-              accept={allowedImageMimeTypes.join(",")}
-              className="mt-2 block w-full text-sm text-stone-700 file:mr-4 file:rounded-lg file:border-0 file:bg-stone-100 file:px-4 file:py-3 file:font-medium"
-              disabled={isUploading}
-              id={inputId}
-              onChange={(event) => {
-                setFile(event.target.files?.[0]);
-                setError(undefined);
-                setStatus(undefined);
-              }}
-              type="file"
-            />
-          </div>
-          <button
-            className="button-secondary"
-            disabled={!file || isUploading}
-            onClick={() => void upload()}
-            type="button"
-          >
-            {isUploading ? "処理中…" : "画像をアップロード"}
-          </button>
+        <div className="rounded-lg border border-dashed border-stone-300 bg-stone-50 p-5 text-sm text-stone-600">
+          トップ画像は未設定です。
         </div>
       )}
+
+      <div className="space-y-4 border-t border-stone-200 pt-4">
+        <div>
+          <label
+            className="text-sm font-medium text-stone-800"
+            htmlFor={altTextId}
+          >
+            代替テキスト（任意）
+          </label>
+          <input
+            className="mt-2 min-h-12 w-full rounded-lg border border-stone-300 px-3"
+            id={altTextId}
+            maxLength={500}
+            onChange={(event) => setAltText(event.target.value)}
+            value={altText}
+          />
+        </div>
+        <div>
+          <label
+            className="text-sm font-medium text-stone-800"
+            htmlFor={inputId}
+          >
+            {image ? "新しいトップ画像へ差し替える" : "トップ画像を選択"}
+            （JPEG / PNG / WebP、20MB以下）
+          </label>
+          <input
+            accept={allowedImageMimeTypes.join(",")}
+            className="mt-2 block w-full text-sm text-stone-700 file:mr-4 file:rounded-lg file:border-0 file:bg-stone-100 file:px-4 file:py-3 file:font-medium"
+            disabled={isUploading}
+            id={inputId}
+            onChange={(event) => {
+              setFile(event.target.files?.[0]);
+              setError(undefined);
+              setStatus(undefined);
+            }}
+            type="file"
+          />
+        </div>
+        <button
+          className="button-secondary"
+          disabled={!file || isUploading}
+          onClick={() => void upload()}
+          type="button"
+        >
+          {isUploading
+            ? "処理中…"
+            : image
+              ? "新しい画像をアップロード"
+              : "画像をアップロード"}
+        </button>
+        {image ? (
+          <p className="text-xs leading-5 text-stone-500">
+            新しい画像をアップロードすると、現在のプレビューは新しい1枚へ置き換わります。
+            {replacementDeletesOriginal
+              ? " 投稿を保存すると、以前の画像データはStorageを含めて削除されます。"
+              : " 保存時は新しい1枚だけがこの項目へ登録されます。"}
+          </p>
+        ) : null}
+      </div>
 
       {status ? (
         <p className="text-sm text-emerald-800" role="status">
@@ -222,8 +247,7 @@ export function ImageUploader({ initialImage }: ImageUploaderProps) {
         </p>
       ) : null}
       <p className="text-xs leading-5 text-stone-500">
-        透かしON/OFFは投稿に保存します。Phase
-        1の画像processorは透かしなしvariantを生成し、将来のprocessor交換点を維持します。
+        アップロード画像は検証・圧縮し、表示用画像とthumbnailを生成します。
       </p>
     </fieldset>
   );

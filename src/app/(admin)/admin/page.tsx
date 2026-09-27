@@ -6,6 +6,11 @@ export const dynamic = "force-dynamic";
 
 const managementLinks = [
   { href: "/admin/quick", label: "Quick投稿", note: "スマホから短文を投稿" },
+  {
+    href: "/admin/ai-inbox",
+    label: "AI Handoff Inbox",
+    note: "外部AI候補を確認して下書き化",
+  },
   { href: "/admin/posts", label: "Blog", note: "投稿・予約・Revision・Trash" },
   { href: "/admin/content", label: "Content", note: "全コンテンツ管理" },
   { href: "/admin/projects", label: "Projects", note: "分類とテーマ設定" },
@@ -33,7 +38,16 @@ export default async function AdminDashboardPage() {
         <h2 className="text-lg font-bold" id="notifications">
           未処理
         </h2>
-        <div className="mt-3 grid gap-4 sm:grid-cols-2">
+        <div className="mt-3 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          <Link
+            className="rounded-xl border border-stone-200 bg-white p-5 shadow-sm transition hover:border-stone-400"
+            href="/admin/ai-inbox?status=pending"
+          >
+            <p className="text-sm text-stone-600">確認待ちAI候補</p>
+            <p className="mt-2 text-3xl font-bold text-stone-950">
+              {summary.pendingAiHandoffCount}
+            </p>
+          </Link>
           <Link
             className="rounded-xl border border-stone-200 bg-white p-5 shadow-sm transition hover:border-stone-400"
             href="/admin/inquiries?status=new"

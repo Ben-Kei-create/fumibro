@@ -13,6 +13,8 @@ ProductionのSupabaseとVercelは、このリポジトリから自動作成し�
 5. `.env.example`の全変数をDevelopment、Preview、Productionへ環境別に登録する。
 6. Production secretをPreviewへ流用しない。`SUPABASE_SECRET_KEY`と`VISITOR_HMAC_SECRET`はserver-onlyとする。
 
+Phase 1の統合確認は、GitHubの`codex/preview`ブランチをVercel Preview環境へ配置する。`main`へのpushでProductionを自動更新しない。Preview検証後に別途承認を取得してからProductionを更新する。
+
 ## Release手順
 
 固定済みNode/npmを使う。
@@ -43,6 +45,8 @@ npm run db:test
 5. Previewで公開/予約/hidden/Trash、Admin AAL2、画像、コメント、👍、Contact、Library署名download、RSS、Exportを確認する。
 6. Supabase Security AdvisorとPerformance Advisorを確認し、重大項目を解消する。
 7. Productionをdeployし、`/robots.txt`、`/sitemap.xml`、`/feed.xml`、`/privacy`を含むsmoke testを行う。
+
+Phase 2 AI Handoff Inboxを含むPreviewでは、追加で`/admin/ai-inbox`のAAL2保護、service-only受信RPCの冪等性、下書き変換、監査event、外部roleの直接table write拒否を確認する。provider由来の実データは、Previewのschema/UI検証後に別承認で投入する。
 
 ## Migration規則
 

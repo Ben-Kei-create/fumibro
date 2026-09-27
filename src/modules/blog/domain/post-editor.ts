@@ -48,6 +48,7 @@ export const postEditorSchema = z
     imageAssetId: optionalUuid,
     isSpoiler: z.boolean(),
     locationId: optionalUuid,
+    originalImageAssetId: optionalUuid,
     postedAt: localDateTime,
     projectId: optionalUuid,
     publishAt: z
@@ -87,6 +88,7 @@ export type PostEditorValues = {
   imageAssetId: string | null;
   isSpoiler: boolean;
   locationId: string | null;
+  originalImageAssetId: string | null;
   postedAt: string;
   projectId: string | null;
   publishAt: string | null;

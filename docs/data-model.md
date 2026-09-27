@@ -438,7 +438,7 @@ new_inquiries    = contact_inquiries.status = 'new' AND deleted_at IS NULL
 total_pending    = pending_comments + new_inquiries
 ```
 
-Phase 2のAI Handoff Inboxを導入した時点で、その未処理件数を同じQuery DTOへ追加する。Phase 1にAI用テーブルは作らない。
+Phase 2では`ai_handoff_inbox.status = 'pending'`も同じQuery DTOで集計する。
 
 ## Settings、監査、rate limit
 
@@ -454,11 +454,11 @@ Phase 2のAI Handoff Inboxを導入した時点で、その未処理件数を同
 
 コメント、問い合わせ、👍等の短時間rate limit用。短期HMAC化キーと期限だけを保持し、生IPを保存しない。期限切れ行は運用で削除する。
 
-## AI Handoff InboxはPhase 2
+## `ai_handoff_inbox`
 
-Phase 1のデータモデルにAI Handoffテーブルを含めない。Phase 2で導入する場合は非公開schemaにstagingを置き、候補、出所、冪等key、提案snapshot、状態、判断者、判断日時を保持する。
+外部AIやimportが提案した候補を人間の確認まで保持するRLS保護staging。`source_system + source_external_id`をunique keyとし、payload、提案先、提案本文、状態、判断者、判断日時、変換先IDを保持する。
 
-許可される人間の判断は`公開`、`下書き`、`無視`。`公開`または`下書き`の選択後だけApplication Commandを介して`content_items`へ反映する。AIや外部workerへpublic contentの直接INSERT/UPDATE権限を与えない。
+外部workerは`service_enqueue_ai_handoff`だけを実行でき、テーブル権限や公開権限を持たない。候補は必ず`pending`となる。AAL2 Adminの変換後は`approved`、通常CMSで公開後は`published`、採用しない場合は`ignored`、変換失敗時は`error`となる。Blog、Works、Library、Portfolioは既存のcanonical Commandで下書き化し、`content_items`を二重管理しない。
 
 ## 完全削除
 

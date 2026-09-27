@@ -66,6 +66,14 @@ export default async function EditAdminPostPage({
           選択したRevisionへ復元しました。復元直前の状態も履歴に残っています。
         </p>
       ) : null}
+      {query.image_cleanup === "failed" ? (
+        <p
+          className="mt-5 rounded-lg bg-amber-50 p-3 text-sm text-amber-900"
+          role="alert"
+        >
+          投稿と新しいトップ画像は保存されましたが、以前の画像を完全削除できませんでした。Mediaを確認してください。
+        </p>
+      ) : null}
 
       <PostEditorForm
         initialPost={post}

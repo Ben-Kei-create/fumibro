@@ -14,6 +14,24 @@ test("public Home exposes the Phase 1 shell without secrets", async ({
   await expect(
     page.getByRole("heading", { name: "FUMIBROに質問" }),
   ).toBeVisible();
+  await expect(
+    page.getByRole("heading", { level: 2, name: "最新投稿" }),
+  ).toBeVisible();
+  await expect(
+    page.getByRole("heading", { level: 2, name: "掲示板" }),
+  ).toBeVisible();
+  await expect(
+    page.getByRole("heading", { level: 2, name: "最近の作品" }),
+  ).toBeVisible();
+  await expect(
+    page.getByRole("link", { name: "Works 完成した本・教材・アプリ" }),
+  ).toBeVisible();
+  await expect(
+    page.getByRole("link", { name: "Library PDFや配布コンテンツ" }),
+  ).toBeVisible();
+  await expect(
+    page.getByRole("link", { name: "Images ダウンロードできる画像" }),
+  ).toBeVisible();
   await expect(page.getByRole("button", { name: "準備中" })).toBeDisabled();
   await expect(page.getByRole("link", { name: "Privacy" })).toBeVisible();
 
@@ -27,6 +45,28 @@ test("public Home exposes the Phase 1 shell without secrets", async ({
   );
 });
 
+test("Blog exposes its editorial timeline and category navigation", async ({
+  page,
+}) => {
+  const response = await page.goto("/blog");
+  expect(response?.status()).toBe(200);
+  await expect(
+    page.getByRole("heading", { level: 1, name: "Blog" }),
+  ).toBeVisible();
+  await expect(
+    page.getByRole("navigation", { name: "投稿ジャンル" }),
+  ).toBeVisible();
+  await expect(
+    page.getByRole("heading", { level: 2, name: "すべての投稿" }),
+  ).toBeVisible();
+  await expect(page.getByRole("link", { name: "Blogを検索" })).toBeVisible();
+  const noteLink = page.getByRole("link", { name: /noteも読む/u });
+  await expect(noteLink).toBeVisible();
+  await expect(noteLink).toHaveAttribute("href", "https://note.com/benkein");
+  await expect(noteLink).toHaveAttribute("target", "_blank");
+  await expect(noteLink).toHaveAttribute("rel", "noopener noreferrer");
+});
+
 test("signed-out Admin is redirected to the login form", async ({ page }) => {
   await page.goto("/admin");
   await expect(page).toHaveURL(/\/admin\/login\?next=%2Fadmin/u);
@@ -35,6 +75,53 @@ test("signed-out Admin is redirected to the login form", async ({ page }) => {
   ).toBeVisible();
   await expect(page.getByLabel("メールアドレス")).toBeVisible();
   await expect(page.getByLabel("パスワード")).toBeVisible();
+});
+
+test("signed-out AI Handoff Inbox is protected by Admin login", async ({
+  page,
+}) => {
+  await page.goto("/admin/ai-inbox");
+  await expect(page).toHaveURL(/\/admin\/login\?next=%2Fadmin%2Fai-inbox/u);
+  await expect(
+    page.getByRole("heading", { name: "管理者ログイン" }),
+  ).toBeVisible();
+});
+
+test("Images gallery is public and its Admin is protected", async ({
+  page,
+}) => {
+  await page.goto("/images");
+  await expect(
+    page.getByRole("heading", { level: 1, name: "FUMIBRO Images" }),
+  ).toBeVisible();
+  await expect(page.getByText("ADVERTISEMENT SPACE")).toHaveCount(0);
+  await page.goto("/admin/images");
+  await expect(page).toHaveURL(/\/admin\/login\?next=%2Fadmin%2Fimages/u);
+});
+
+test("invalid recovery credentials fail closed", async ({ page }) => {
+  await page.goto("/auth/confirm?token_hash=invalid&type=signup");
+  await expect(page).toHaveURL(/\/admin\/forgot-password\?error=invalid_link/u);
+  await expect(
+    page.getByText("リセットリンクが無効または期限切れです。"),
+  ).toBeVisible();
+});
+
+test("password form requires an authenticated Admin recovery session", async ({
+  page,
+}) => {
+  await page.goto("/admin/update-password");
+  await expect(page).toHaveURL(/\/admin\/forgot-password\?error=invalid_link/u);
+  await expect(page.getByLabel("新しいパスワード")).toHaveCount(0);
+});
+
+test("login explains a completed password update", async ({ page }) => {
+  await page.goto("/admin/login?password_updated=1");
+  await expect(
+    page.getByText(
+      "パスワードを更新しました。新しいパスワードでログインしてください。",
+    ),
+  ).toBeVisible();
 });
 
 test("layout does not overflow the active viewport", async ({ page }) => {

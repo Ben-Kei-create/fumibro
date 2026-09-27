@@ -28,6 +28,16 @@
 
 `@supabase/ssr`はrequestごとにserver clientを生成する。利用者sessionを持つclientをmodule scopeへ保持しない。Admin応答、Auth callback、cookie refresh応答を共有cacheへ入れない。
 
+### Admin password recovery
+
+- Recoveryメールは`token_hash`と`type=recovery`を`/auth/confirm`へ送り、Route Handlerが`verifyOtp()`でcookie sessionを確立してから`/admin/update-password`へ303 redirectする。
+- callbackは`app_metadata.role = admin`を再確認する。token、code、flow idをpassword入力画面へ転送せず、callback応答は`private, no-store`とする。
+- password変更は認証・Admin権限を再確認するServer Actionから`updateUser()`を呼び、完了後にlocal sessionを破棄する。新passwordで再loginし、TOTPでAAL2へ到達する。
+- `/auth/callback`とPKCE code exchangeは、既発行リンクおよび標準テンプレート向けの互換経路に限定する。primary設計はtoken hashである。
+- 2026年6月3日以降に作成されたFree Projectは、Supabase標準SMTPのままAuth email templateを変更できない。token-hash経路を有効化するには、課金承認済みplanまたは管理者が承認したcustom SMTPが必要である。外部メールproviderを無断で追加しない。
+- Free標準SMTPのPKCE互換経路では、Recovery申請をBrowser clientから開始し、code verifierをfirst-party cookieへ保存する。Admin画面とAuth callbackは`NEXT_PUBLIC_SITE_URL`の単一originへ307 redirectし、一意のVercel deployment URLと固定Preview aliasの間でverifier cookieが分断されることを防ぐ。
+- Recoveryメールは申請に使った同じブラウザで開く。異なる端末・ブラウザではPKCE verifierを共有できないため、token-hash templateを利用できるまでサポート対象外とする。
+
 ## 認可境界
 
 `src/proxy.ts`はcookie refreshと楽観的なredirectに限定する。Proxyは低速DB照会や最終認可を担当しない。
@@ -178,9 +188,7 @@ badgeは件数だけを表示し、問い合わせ本文、reply-to、コメン�
 
 ## AIと外部取込
 
-Phase 1でAI Handoff Inboxを実装しない。将来実装時もAIや外部workerへ公開テーブルの直接書込み権限を与えない。
-
-Phase 2の候補は非公開stagingへ入り、Adminが`公開`、`下書き`、`無視`のいずれかを選ぶ。公開・下書き適用時は次を必須とする。
+Phase 2のAI Handoff候補はRLS保護されたstagingへservice-only RPCから入り、外部workerへInboxまたは公開テーブルの直接書込み権限を与えない。候補は常に`pending`で、Adminが下書き変換または`無視`を選ぶ。下書き適用時は次を必須とする。
 
 - source冪等性確認
 - schema検証
@@ -189,6 +197,8 @@ Phase 2の候補は非公開stagingへ入り、Adminが`公開`、`下書き`、
 - 通常のApplication Command
 - RLSと公開条件
 - 監査
+
+`SECURITY DEFINER`関数は`search_path = pg_catalog`を固定し、PUBLIC EXECUTEを剥奪する。受信RPCだけを`service_role`へ、review RPCだけを`authenticated`へ付与し、後者は関数内でAAL2 Adminを再検証する。`service_role`にもInboxテーブル権限は付与しない。
 
 AI出力を信頼済みHTML、SQL、URL、filenameとして扱わない。
 

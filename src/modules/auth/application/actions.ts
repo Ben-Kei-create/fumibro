@@ -12,6 +12,15 @@ const loginSchema = z.object({
   next: z.string().optional(),
 });
 
+const updatePasswordSchema = z
+  .object({
+    confirmation: z.string().min(12).max(1024),
+    password: z.string().min(12).max(1024),
+  })
+  .refine((value) => value.password === value.confirmation, {
+    path: ["confirmation"],
+  });
+
 function loginErrorUrl(code: "invalid" | "unauthorized") {
   const params = new URLSearchParams({ error: code });
   return `/admin/login?${params.toString()}`;
@@ -56,4 +65,32 @@ export async function logoutAction() {
   const supabase = await createServerSupabaseClient();
   await supabase.auth.signOut({ scope: "local" });
   redirect("/admin/login");
+}
+
+export async function updatePasswordAction(formData: FormData) {
+  const parsed = updatePasswordSchema.safeParse({
+    confirmation: formData.get("confirmation"),
+    password: formData.get("password"),
+  });
+
+  if (!parsed.success) {
+    redirect("/admin/update-password?error=invalid_password");
+  }
+
+  const supabase = await createServerSupabaseClient();
+  const { data, error: userError } = await supabase.auth.getUser();
+  if (userError || data.user?.app_metadata.role !== "admin") {
+    await supabase.auth.signOut({ scope: "local" });
+    redirect("/admin/forgot-password?error=invalid_link");
+  }
+
+  const { error } = await supabase.auth.updateUser({
+    password: parsed.data.password,
+  });
+  if (error) {
+    redirect("/admin/update-password?error=update_failed");
+  }
+
+  await supabase.auth.signOut({ scope: "local" });
+  redirect("/admin/login?password_updated=1");
 }

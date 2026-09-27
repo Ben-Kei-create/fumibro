@@ -44,6 +44,7 @@ export async function initializeImageUpload(
         declared_mime_type: parsed.data.mimeType,
         declared_size_bytes: parsed.data.sizeBytes,
         object_path: objectPath,
+        purpose: parsed.data.purpose,
       },
     },
     mime_type: parsed.data.mimeType,

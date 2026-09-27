@@ -22,7 +22,7 @@ public-media
   公開済みdisplay画像、thumbnail、公開名刺PNG
 
 private-downloads
-  配布用PDF、将来の有料ZIP等
+  配布用PDF、Images標準解像度WebP、将来の有料ZIP等
 ```
 
 - bucket名と役割を混同しない。
@@ -42,7 +42,11 @@ private-downloads
 6. 公開済みコンテンツに必要なvariantだけ`public-media`へ置く。
 7. 非公開・Trash・復元時にDB状態とpublic variantを整合させる。
 
-投稿画像はDB構造で最大1枚とする。透かしON/OFFを保存し、Media Processor Portを用意するが、重い透かし生成自体はPhase 1必須ではない。
+FUMIBRO Imagesでは同じ検証後に最大2560px・WebPの`download` variantを追加する。これはEXIFを除去した標準配布版であり、`private-downloads`から60秒の署名URLだけで渡す。raw originalは将来の高解像度販売用masterとして保持し、無料配布しない。
+
+投稿画像はDB構造で最大1枚とする。Blog Adminでトップ画像を差し替えるか外して投稿を保存した場合、旧画像は復元用originalを含めて完全削除する。処理は、service-only commandで参照関係を再確認して削除対象を確定し、Storage APIでobjectを削除した後にasset metadataを削除する二段階方式とする。旧画像を指す同一投稿のRevision snapshotも`null`へscrubし、存在しないassetを復元しない。別コンテンツが参照中のassetは削除を拒否する。削除結果は`admin_audit_events`へ記録する。
+
+透かしON/OFFを保存し、Media Processor Portを用意するが、重い透かし生成自体はPhase 1必須ではない。
 
 ### Library access policy
 
