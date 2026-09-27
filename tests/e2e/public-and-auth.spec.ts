@@ -45,6 +45,23 @@ test("public Home exposes the Phase 1 shell without secrets", async ({
   );
 });
 
+test("Blog exposes its editorial timeline and category navigation", async ({
+  page,
+}) => {
+  const response = await page.goto("/blog");
+  expect(response?.status()).toBe(200);
+  await expect(
+    page.getByRole("heading", { level: 1, name: "Blog" }),
+  ).toBeVisible();
+  await expect(
+    page.getByRole("navigation", { name: "投稿ジャンル" }),
+  ).toBeVisible();
+  await expect(
+    page.getByRole("heading", { level: 2, name: "すべての投稿" }),
+  ).toBeVisible();
+  await expect(page.getByRole("link", { name: "Blogを検索" })).toBeVisible();
+});
+
 test("signed-out Admin is redirected to the login form", async ({ page }) => {
   await page.goto("/admin");
   await expect(page).toHaveURL(/\/admin\/login\?next=%2Fadmin/u);
