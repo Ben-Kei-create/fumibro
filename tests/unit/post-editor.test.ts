@@ -13,6 +13,7 @@ const validInput = {
   imageAssetId: "",
   isSpoiler: false,
   locationId: "",
+  originalImageAssetId: "",
   postedAt: "2026-08-27T12:34",
   projectId: "",
   publishAt: "",
@@ -29,6 +30,7 @@ describe("Blog editor input", () => {
       categoryId: null,
       contentId: null,
       externalUrl: "https://example.com",
+      originalImageAssetId: null,
       publishAt: null,
       title: null,
     });

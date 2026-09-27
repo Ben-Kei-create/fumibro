@@ -1,4 +1,4 @@
-import { ArrowRight, Cat, ExternalLink, Hash, Search } from "lucide-react";
+import { Cat, ExternalLink, Search } from "lucide-react";
 import Link from "next/link";
 
 import type {
@@ -17,152 +17,66 @@ type BlogIndexProps = {
   posts: PublicPostDto[];
 };
 
-function PostMeta({ post }: { post: PublicPostDto }) {
-  return (
-    <div className="flex flex-wrap items-center gap-x-3 gap-y-2 text-xs font-semibold text-stone-500">
-      <time dateTime={post.publishAt}>{formatPublicDate(post.publishAt)}</time>
-      {post.feedEventType ? (
-        <span className="rounded-full bg-stone-950 px-2.5 py-1 text-[0.65rem] tracking-[0.08em] text-white">
-          {post.feedEventType.toUpperCase()}
-        </span>
-      ) : null}
-      {post.project ? (
-        <Link
-          className="transition hover:text-stone-950"
-          href={`/projects/${post.project.slug}`}
-        >
-          {post.project.name}
-        </Link>
-      ) : null}
-      {post.category ? (
-        <Link
-          className="transition hover:text-stone-950"
-          href={`/blog/categories/${post.category.slug}`}
-        >
-          {post.category.label}
-        </Link>
-      ) : null}
-    </div>
-  );
-}
-
-function PostTags({ post }: { post: PublicPostDto }) {
-  if (!post.tags.length) return null;
+function BlogPostCard({ post }: { post: PublicPostDto }) {
+  const title = post.title ?? "無題の投稿";
+  const section = post.project?.name ?? post.category?.label ?? "FUMIBRO";
 
   return (
-    <div className="mt-5 flex flex-wrap gap-x-3 gap-y-2">
-      {post.tags.map((tag) => (
-        <Link
-          className="inline-flex items-center gap-0.5 text-xs font-medium text-stone-500 transition hover:text-stone-950"
-          href={`/tags/${tag.slug}`}
-          key={tag.slug}
-        >
-          <Hash aria-hidden="true" className="size-3" />
-          {tag.label}
-        </Link>
-      ))}
-    </div>
-  );
-}
-
-function FeaturedPost({ post }: { post: PublicPostDto }) {
-  return (
-    <article className="overflow-hidden rounded-[2rem] border border-stone-300 bg-white shadow-[0_22px_60px_-42px_rgba(28,25,23,0.65)]">
-      <div className="grid lg:grid-cols-[1.1fr_0.9fr]">
-        <Link
-          aria-label={`${post.title ?? "無題の投稿"}を読む`}
-          className="relative min-h-72 overflow-hidden bg-stone-950 lg:min-h-[34rem]"
-          href={`/blog/${post.slug}`}
-        >
+    <article className="group h-full overflow-hidden rounded-2xl bg-[#202a31] text-white shadow-[0_18px_45px_-30px_rgba(28,25,23,0.9)] transition duration-300 hover:-translate-y-1 hover:shadow-[0_22px_52px_-28px_rgba(28,25,23,0.95)]">
+      <Link
+        aria-label={`${title}の記事詳細を読む`}
+        className="flex h-full flex-col focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-stone-950"
+        href={`/blog/${post.slug}`}
+      >
+        <div className="relative aspect-[16/9] overflow-hidden bg-stone-900">
           {post.image ? (
             <PublicImage image={post.image} />
           ) : (
-            <div className="flex h-full min-h-72 flex-col justify-between p-7 text-white sm:p-10 lg:min-h-[34rem]">
-              <div className="flex items-center justify-between text-xs font-bold tracking-[0.22em] text-stone-400">
-                <span>LATEST STORY</span>
-                <Cat aria-hidden="true" className="size-7" />
+            <div className="flex h-full flex-col justify-between bg-[radial-gradient(circle_at_top_right,#57534e_0,transparent_45%),linear-gradient(145deg,#292524,#0c0a09)] p-5">
+              <div className="flex items-center justify-between text-[0.65rem] font-bold tracking-[0.2em] text-stone-400">
+                <span>FUMIBRO JOURNAL</span>
+                <Cat aria-hidden="true" className="size-6" />
               </div>
-              <div>
-                <p className="text-sm font-semibold tracking-[0.16em] text-stone-400">
-                  FUMIBRO JOURNAL
-                </p>
-                <p className="mt-4 max-w-md text-3xl font-bold leading-tight tracking-tight sm:text-4xl">
-                  書くことも、つくることも、同じタイムラインへ。
-                </p>
-              </div>
+              <p className="line-clamp-2 text-xl font-bold leading-snug text-stone-100">
+                {title}
+              </p>
             </div>
           )}
-        </Link>
-
-        <div className="flex flex-col justify-between p-7 sm:p-10">
-          <div>
-            <PostMeta post={post} />
-            <h2 className="mt-6 text-3xl font-bold leading-tight tracking-tight text-stone-950 sm:text-4xl">
-              <Link href={`/blog/${post.slug}`}>
-                {post.title ?? "無題の投稿"}
-              </Link>
-            </h2>
-            <p className="mt-5 line-clamp-7 whitespace-pre-wrap text-base leading-8 text-stone-600">
-              {post.excerpt ?? post.body}
-            </p>
-            <PostTags post={post} />
-          </div>
-          <Link
-            className="group mt-10 inline-flex items-center gap-2 text-sm font-bold text-stone-950"
-            href={`/blog/${post.slug}`}
-          >
-            続きを読む
-            <ArrowRight
-              aria-hidden="true"
-              className="size-4 transition group-hover:translate-x-1"
-            />
-          </Link>
         </div>
-      </div>
-    </article>
-  );
-}
-
-function TimelinePost({ index, post }: { index: number; post: PublicPostDto }) {
-  return (
-    <article className="group grid gap-5 border-b border-stone-300 py-8 first:pt-0 last:border-0 last:pb-0 sm:grid-cols-[4.5rem_1fr_auto] sm:gap-7">
-      <p className="text-xs font-bold tracking-[0.18em] text-stone-400">
-        {String(index + 2).padStart(2, "0")}
-      </p>
-      <div className="min-w-0">
-        <PostMeta post={post} />
-        <h2 className="mt-3 text-2xl font-bold leading-snug tracking-tight text-stone-950">
-          <Link href={`/blog/${post.slug}`}>{post.title ?? "無題の投稿"}</Link>
-        </h2>
-        <p className="mt-3 line-clamp-3 whitespace-pre-wrap text-sm leading-7 text-stone-600 sm:text-base">
-          {post.excerpt ?? post.body}
-        </p>
-        <PostTags post={post} />
-      </div>
-      {post.image ? (
-        <Link
-          aria-label={`${post.title ?? "無題の投稿"}を読む`}
-          className="h-40 overflow-hidden rounded-2xl bg-stone-200 sm:h-32 sm:w-44"
-          href={`/blog/${post.slug}`}
-        >
-          <PublicImage image={post.image} />
-        </Link>
-      ) : (
-        <Link
-          aria-label={`${post.title ?? "無題の投稿"}を読む`}
-          className="hidden size-12 place-items-center self-center rounded-full border border-stone-300 text-stone-500 transition group-hover:border-stone-950 group-hover:bg-stone-950 group-hover:text-white sm:grid"
-          href={`/blog/${post.slug}`}
-        >
-          <ArrowRight aria-hidden="true" className="size-4" />
-        </Link>
-      )}
+        <div className="flex flex-1 flex-col p-5">
+          <div className="flex flex-wrap items-center gap-2 text-[0.7rem] font-semibold text-stone-400">
+            <span>{section}</span>
+            <span aria-hidden="true">·</span>
+            <time dateTime={post.publishAt}>
+              {formatPublicDate(post.publishAt)}
+            </time>
+            {post.feedEventType ? (
+              <span className="rounded-full border border-stone-500 px-2 py-0.5 text-[0.6rem] tracking-[0.08em] text-stone-200">
+                {post.feedEventType.toUpperCase()}
+              </span>
+            ) : null}
+          </div>
+          <h2 className="mt-3 line-clamp-3 text-xl font-bold leading-snug tracking-tight text-white">
+            {title}
+          </h2>
+          <p className="mt-3 line-clamp-3 whitespace-pre-wrap text-sm leading-6 text-stone-300">
+            {post.excerpt ?? post.body}
+          </p>
+          {post.tags.length ? (
+            <p className="mt-auto pt-5 text-xs text-stone-400">
+              {post.tags
+                .slice(0, 3)
+                .map((tag) => `#${tag.label}`)
+                .join("  ")}
+            </p>
+          ) : null}
+        </div>
+      </Link>
     </article>
   );
 }
 
 export function BlogIndex({ categories, posts }: BlogIndexProps) {
-  const [featuredPost, ...timelinePosts] = posts;
-
   return (
     <main className="mx-auto w-full max-w-7xl px-5 pb-20 pt-6 sm:px-8 sm:pb-28 sm:pt-10">
       <header className="grid overflow-hidden rounded-[2rem] border border-stone-300 bg-white lg:grid-cols-[1.35fr_0.65fr]">
@@ -271,16 +185,14 @@ export function BlogIndex({ categories, posts }: BlogIndexProps) {
           </p>
         </div>
 
-        {featuredPost ? (
-          <div className="mt-7">
-            <FeaturedPost post={featuredPost} />
-            {timelinePosts.length ? (
-              <div className="mt-12 rounded-[2rem] border border-stone-300 bg-[#efede8] p-6 sm:p-9">
-                {timelinePosts.map((post, index) => (
-                  <TimelinePost index={index} key={post.id} post={post} />
-                ))}
-              </div>
-            ) : null}
+        {posts.length ? (
+          <div
+            className="mt-7 grid gap-5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4"
+            data-testid="blog-card-list"
+          >
+            {posts.map((post) => (
+              <BlogPostCard key={post.id} post={post} />
+            ))}
           </div>
         ) : (
           <div className="mt-7">

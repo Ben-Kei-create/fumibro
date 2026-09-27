@@ -158,6 +158,11 @@ The browser receives a short-lived upload token for a UUID path in
 actual decode, dimensions, animation, and a 40-megapixel limit. Only stripped,
 compressed WebP display and thumbnail variants are written to `public-media`.
 Authenticated browsers cannot write that public bucket directly.
+The Blog editor exposes one top-image slot. Replacing or clearing it removes
+the previous original, display, and thumbnail objects through the Storage API,
+then deletes their asset metadata and scrubs that image from the same post's
+revision snapshots. Service-only RPCs recheck references and record the erasure
+in the Admin audit log; browser roles cannot call them.
 
 FUMIBRO Images (`/images`, `/admin/images`) reuses the same validation and adds
 an EXIF-stripped standard-resolution WebP `download` variant in

@@ -8,6 +8,7 @@ import { parseTokyoDateTimeLocal } from "@/lib/datetime/tokyo";
 import { createServiceSupabaseClient } from "@/lib/supabase/service";
 import { requireAdmin } from "@/modules/auth/application/require-admin";
 import { postEditorSchema } from "@/modules/blog/domain/post-editor";
+import { purgeReplacedPostImage } from "@/modules/media/application/purge-replaced-post-image";
 
 export type PostEditorActionState = {
   message?: string;
@@ -65,6 +66,7 @@ export async function savePostAction(
     imageAssetId: formData.get("imageAssetId") ?? "",
     isSpoiler: formData.get("isSpoiler") === "on",
     locationId: formData.get("locationId") ?? "",
+    originalImageAssetId: formData.get("originalImageAssetId") ?? "",
     postedAt: formData.get("postedAt"),
     projectId: formData.get("projectId") ?? "",
     publishAt: formData.get("publishAt") ?? "",
@@ -100,7 +102,7 @@ export async function savePostAction(
     };
   }
 
-  const { supabase } = await requireAdmin({
+  const { supabase, userId } = await requireAdmin({
     nextPath: parsed.data.contentId
       ? `/admin/posts/${parsed.data.contentId}/edit`
       : "/admin/posts/new",
@@ -159,8 +161,26 @@ export async function savePostAction(
     };
   }
 
+  let imageCleanupFailed = false;
+  if (
+    parsed.data.originalImageAssetId &&
+    parsed.data.originalImageAssetId !== parsed.data.imageAssetId
+  ) {
+    try {
+      await purgeReplacedPostImage({
+        actorUserId: userId,
+        assetId: parsed.data.originalImageAssetId,
+        contentItemId: contentId,
+      });
+    } catch {
+      imageCleanupFailed = true;
+    }
+  }
+
   revalidateContentPaths(contentId);
-  redirect(`/admin/posts/${contentId}/edit?saved=1`);
+  redirect(
+    `/admin/posts/${contentId}/edit?saved=1${imageCleanupFailed ? "&image_cleanup=failed" : ""}`,
+  );
 }
 
 export async function setContentTrashAction(formData: FormData) {
