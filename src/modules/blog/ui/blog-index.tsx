@@ -1,4 +1,4 @@
-import { ArrowRight, Cat, Hash, Search } from "lucide-react";
+import { ArrowRight, Cat, ExternalLink, Hash, Search } from "lucide-react";
 import Link from "next/link";
 
 import type {
@@ -180,13 +180,25 @@ export function BlogIndex({ categories, posts }: BlogIndexProps) {
               短いメモも長い文章も、ひとつの時間軸に記録します。
             </p>
           </div>
-          <Link
-            className="inline-flex w-fit items-center gap-2 text-sm font-bold text-stone-950"
-            href="/search"
-          >
-            <Search aria-hidden="true" className="size-4" />
-            Blogを検索
-          </Link>
+          <div className="flex flex-wrap items-center gap-x-6 gap-y-3">
+            <Link
+              className="inline-flex w-fit items-center gap-2 text-sm font-bold text-stone-950"
+              href="/search"
+            >
+              <Search aria-hidden="true" className="size-4" />
+              Blogを検索
+            </Link>
+            <Link
+              className="inline-flex w-fit items-center gap-2 text-sm font-bold text-stone-950 underline decoration-stone-400 underline-offset-4 transition hover:decoration-stone-950"
+              href="https://note.com/benkein"
+              rel="noopener noreferrer"
+              target="_blank"
+            >
+              noteも読む
+              <ExternalLink aria-hidden="true" className="size-4" />
+              <span className="sr-only">（外部サイト・新しいタブ）</span>
+            </Link>
+          </div>
         </div>
 
         <div className="flex flex-col justify-center divide-y divide-stone-300 bg-white p-7 sm:p-10">

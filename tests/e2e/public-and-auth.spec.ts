@@ -60,6 +60,11 @@ test("Blog exposes its editorial timeline and category navigation", async ({
     page.getByRole("heading", { level: 2, name: "すべての投稿" }),
   ).toBeVisible();
   await expect(page.getByRole("link", { name: "Blogを検索" })).toBeVisible();
+  const noteLink = page.getByRole("link", { name: /noteも読む/u });
+  await expect(noteLink).toBeVisible();
+  await expect(noteLink).toHaveAttribute("href", "https://note.com/benkein");
+  await expect(noteLink).toHaveAttribute("target", "_blank");
+  await expect(noteLink).toHaveAttribute("rel", "noopener noreferrer");
 });
 
 test("signed-out Admin is redirected to the login form", async ({ page }) => {
